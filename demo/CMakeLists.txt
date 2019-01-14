@@ -8,17 +8,9 @@ endif()
 
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
-
 include_directories(SYSTEM ${OPENGL_INCLUDE_DIR})
 include_directories(SYSTEM Contrib/fastlz)
 include_directories(SYSTEM Contrib)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/DebugUtils/Include)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/Detour/Include)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/DetourCrowd/Include)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/DetourTileCache/Include)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/Recast/Include)
-include_directories(${CMAKE_SOURCE_DIR}/recastnavigation/Include)
-
 if (WIN32)
     add_executable(demo WIN32 ${SOURCES})
 elseif(APPLE)
@@ -35,8 +27,8 @@ if (WIN32)
     file(COPY "${SDL2_RUNTIME_LIBRARY}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-add_dependencies(demo DebugUtils Detour DetourCrowd DetourTileCache Recast)
-target_link_libraries(demo ${OPENGL_LIBRARIES} SDL2::SDL2main DebugUtils Detour DetourCrowd DetourTileCache Recast)
+add_dependencies(demo DebugUtils Detour DetourCrowd DetourTileCache Recast Plus)
+target_link_libraries(demo ${OPENGL_LIBRARIES} SDL2::SDL2main DebugUtils Detour DetourCrowd DetourTileCache Recast Plus)
 
 install(TARGETS demo
         RUNTIME DESTINATION bin

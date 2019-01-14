@@ -12,7 +12,7 @@
  * \note
 *************************************************/
 
-#include "NacScene.h"
+#include "NavScene.h"
 #include "DetourCommon.h"
 #include "GuardFunction.h"
 #include "Recast.h"
@@ -21,13 +21,35 @@
 #include "DetourNavMesh.h"
 namespace NavSpace{
 
+  typedef Pool<float, 3 * 2> OffMeshConVertsPool;
+  typedef Pool<float> OffMeshConRadPool;
+  typedef Pool<unsigned char> OffMeshConDirPool;
+  typedef Pool<unsigned char> OffMeshConAreaPool;
+  typedef Pool<unsigned short> OffMeshConFlagPool;
+  typedef Pool<unsigned int> OffMeshConIdPool;
+  struct BuildOffMeshData{
+    OffMeshConVertsPool verts;
+    OffMeshConRadPool rads;
+    OffMeshConDirPool dirs;
+    OffMeshConFlagPool flags;
+    OffMeshConIdPool ids;
+    OffMeshConAreaPool areas;
+    int count;
+  };
 
-  NavScene::TileNacCache NavScene::buildTile(rcContext* ctx, const TileIndex& tile){
-    TileNacCache cache;
+
+  NavScene::TileNavCache NavScene::buildTileCache(rcContext* ctx,
+                                                  rcConfig* cfg,
+                                                  rcHeightfield* solid,
+                                                  rcCompactHeightfield* chf,
+                                                  rcPolyMesh* pmesh,
+                                                  rcPolyMeshDetail* dmesh,
+                                                  rcContourSet* cset,
+                                                  const TileIndex& tile){
+    TileNavCache cache;
     cache.index = tile;
     cache.data = nullptr;
     cache.size = 0;
-
 
     const float* bmin = m_setting.navBmin;
     const float* bmax = m_setting.navBmax;
@@ -44,39 +66,44 @@ namespace NavSpace{
     buildmax[1] = bmax[1];
     buildmax[2] = bmin[2] + tile.second * tcs + tcs;
 
-    unsigned char* data = buildTileReal(ctx, tile, buildmin, buildmax, cache.size);
+//     rcHeightfield* solid = rcAllocHeightfield();
+//     rcCompactHeightfield* chf = rcAllocCompactHeightfield();
+//     rcPolyMesh* pmesh = rcAllocPolyMesh();
+//     rcPolyMeshDetail* dmesh = rcAllocPolyMeshDetail();
+//     rcContourSet* cset = rcAllocContourSet();
+// 
+//     Utility::GuardFun exitFun([&](){
+//       rcFreeHeightField(solid);
+//       rcFreeCompactHeightfield(chf);
+//       rcFreePolyMesh(pmesh);
+//       rcFreePolyMeshDetail(dmesh);
+//       rcFreeContourSet(cset);
+//     });
+//     rcConfig cfg ;
+
+    unsigned char* data = buildTileReal(ctx, cfg, solid, chf, pmesh, dmesh, cset, tile, buildmin, buildmax, cache.size);
     if(data){
       cache.data = data;
     }
-
-
     return std::move(cache);
   }
 
-  unsigned char*  NavScene::buildTileReal(rcContext* ctx, const TileIndex& tile, const float bmin[3], const float bmax[3], size_t& dataSize){
+  unsigned char*  NavScene::buildTileReal(rcContext* ctx,
+                                          rcConfig* cf,
+                                          rcHeightfield* solid,
+                                          rcCompactHeightfield* chf,
+                                          rcPolyMesh* pmesh,
+                                          rcPolyMeshDetail* dmesh,
+                                          rcContourSet* cset,
+                                          const TileIndex& tile, 
+                                          const float bmin[3],
+                                          const float bmax[3],
+                                          size_t& dataSize){
     if (m_objects.size() <= 0){
       return nullptr;
     }
-    auto scene = m_objects.getData(INVALID_MOBJ_ID);
-    if (!scene){
-      return nullptr;
-    }
 
-    rcHeightfield* solid = rcAllocHeightfield();
-    rcCompactHeightfield* chf = rcAllocCompactHeightfield();
-    rcPolyMesh* pmesh = rcAllocPolyMesh();
-    rcPolyMeshDetail* dmesh = rcAllocPolyMeshDetail();
-    rcContourSet* cset = rcAllocContourSet();
-
-    Utility::GuardFun exitFun([&](){
-      rcFreeHeightField(solid);
-      rcFreeCompactHeightfield(chf);
-      rcFreePolyMesh(pmesh);
-      rcFreePolyMeshDetail(dmesh);
-      rcFreeContourSet(cset);
-    });
-
-    rcConfig cfg;
+    rcConfig cfg = *cf;
     memset(&cfg, 0, sizeof(rcConfig));
     cfg.cs = m_setting.cellSize;
     cfg.ch = m_setting.cellHeight;
@@ -154,7 +181,10 @@ namespace NavSpace{
 
     //mark areas
     //or for each ??
-    scene->markVolume(ctx, *chf);
+    m_objects.forEachValue([&](const ObjectPtr& obj){
+      obj->markVolume(ctx, *chf);
+    });
+   // markVolume(ctx, *chf);
 
 
     if (partitionType == SAMPLE_PARTITION_WATERSHED){
@@ -206,7 +236,7 @@ namespace NavSpace{
                                cfg.detailSampleDist, cfg.detailSampleMaxError,
                                *dmesh)){
       ctx->log(RC_LOG_ERROR, "buildNavigation: Could build polymesh detail.");
-      return 0;
+      return nullptr;
     }
 
 
@@ -249,13 +279,13 @@ namespace NavSpace{
       params.detailVertsCount = dmesh->nverts;
       params.detailTris = dmesh->tris;
       params.detailTriCount = dmesh->ntris;
-      params.offMeshConVerts = scene->getOffMeshConnectionVerts();
-      params.offMeshConRad = scene->getOffMeshConnectionRads();
-      params.offMeshConDir = scene->getOffMeshConnectionDirs();
-      params.offMeshConAreas = scene->getOffMeshConnectionAreas();
-      params.offMeshConFlags = scene->getOffMeshConnectionFlags();
-      params.offMeshConUserID = scene->getOffMeshConnectionId();
-      params.offMeshConCount = scene->getOffMeshConnectionCount();
+      params.offMeshConVerts = getOffMeshConnectionVerts();
+      params.offMeshConRad = getOffMeshConnectionRads();
+      params.offMeshConDir = getOffMeshConnectionDirs();
+      params.offMeshConAreas = getOffMeshConnectionAreas();
+      params.offMeshConFlags = getOffMeshConnectionFlags();
+      params.offMeshConUserID = getOffMeshConnectionId();
+      params.offMeshConCount = getOffMeshConnectionCount();
       params.walkableHeight = m_setting.agentHeight;
       params.walkableRadius = m_setting.agentRadius;
       params.walkableClimb = m_setting.agentMaxClimb;
@@ -270,7 +300,7 @@ namespace NavSpace{
 
       if (!dtCreateNavMeshData(&params, &navData, &navDataSize)){
         ctx->log(RC_LOG_ERROR, "Could not build Detour navmesh.");
-        return 0;
+        return nullptr;
       }
     }
     //m_tileMemUsage = navDataSize / 1024.0f;
@@ -285,6 +315,81 @@ namespace NavSpace{
 
     dataSize = navDataSize;
     return navData;
+  }
+
+  void NavScene::offMeshConBuild() const{
+    if (!m_buildOff){
+      m_buildOff.reset(new BuildOffMeshData);
+    }
+    if (!m_buildOff){ return; }
+    m_buildOff->count = 0;
+    m_buildOff->verts.reset();
+    m_buildOff->rads.reset();
+    m_buildOff->ids.reset();
+    m_buildOff->dirs.reset();
+    m_buildOff->areas.reset();
+    m_buildOff->flags.reset();
+    m_buildOff->dirs.reset();
+
+
+    auto& cref = m_objects.constRefMap();
+    for (auto& pair : cref){
+      auto obj = pair.second;
+      auto& vol = obj->volumeOffConns();
+      m_buildOff->count = m_buildOff->count + vol.m_offCons.count();
+      vol.m_offCons.call([this](const OffMeshCon* conn, size_t index){
+        m_buildOff->verts.add(conn->verts);
+        m_buildOff->rads.add(&conn->rad);
+        m_buildOff->ids.add(&conn->id);
+        m_buildOff->dirs.add(&conn->dir);
+        m_buildOff->areas.add(&conn->area);
+        m_buildOff->flags.add(&conn->flag);
+        m_buildOff->dirs.add(&conn->dir);
+      });
+    }
+  }
+
+  const float* NavScene::getOffMeshConnectionVerts() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->verts.pool();
+  }
+  const float* NavScene::getOffMeshConnectionRads() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->rads.pool();
+  }
+  const unsigned char* NavScene::getOffMeshConnectionDirs() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->dirs.pool();
+  }
+  const unsigned char* NavScene::getOffMeshConnectionAreas() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->areas.pool();
+
+  }
+  const unsigned short* NavScene::getOffMeshConnectionFlags() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->flags.pool();
+
+  }
+  const unsigned int* NavScene::getOffMeshConnectionId() const{
+    if (!m_buildOff){
+      offMeshConBuild();
+    }
+    return m_buildOff->ids.pool();
+  }
+
+  int NavScene::getOffMeshConnectionCount() const{
+    return m_buildOff->count;
   }
 
 }

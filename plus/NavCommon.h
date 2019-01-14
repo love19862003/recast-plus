@@ -75,5 +75,15 @@ namespace NavSpace{
     float navBmax[3];
   };
 
+  class NonCopyAble{
+  protected:
+    NonCopyAble() = default;
+    ~NonCopyAble() = default;
+
+  private:
+    NonCopyAble(const NonCopyAble&) = delete;
+    NonCopyAble& operator=(const NonCopyAble&) = delete;
+  };
+
 }
 

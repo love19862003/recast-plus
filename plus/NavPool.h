@@ -13,24 +13,28 @@
 *************************************************/
 #pragma once
 #include <functional>
+#include <assert.h>
+#include "NavCommon.h"
 namespace NavSpace{
 
   template<typename T, size_t _Size = 1>
-  class Pool{
+  class Pool : public NonCopyAble{
   public:
     typedef T VALUE;
     typedef std::array<T, _Size> ARRAY;
 
+    
     static constexpr size_t ObjectSize() { return  sizeof(VALUE) * _Size; }
 
-    Pool(size_t max = 0) : m_max(max), m_count(0), m_pool(nullptr){
+    explicit Pool(size_t max = 0) : m_max(max), m_count(0), m_pool(nullptr){
+      static_assert(std::is_pod<T>::value);
       if (m_max > 0){
         m_pool = (VALUE*)malloc(m_max * ObjectSize());
         memset(m_pool, 0, m_max * ObjectSize());
       }
     }
 
-    ~Pool(){
+    virtual ~Pool(){
       m_max = m_count = 0;
       if (m_pool) free(m_pool);
       m_pool = nullptr;
@@ -120,7 +124,7 @@ namespace NavSpace{
 
     inline size_t maxCount() const{ return m_max; }
 
-    inline const VALUE* pool(size_t index = 0) const{ return m_pool + index * _Size; }
+    inline const VALUE* pool(size_t index = 0) const{ assert(index < m_count); return m_pool + index * _Size; }
 
     inline const VALUE& value(size_t index = 0) const{ assert(index < m_count);  return *pool(index); }
 

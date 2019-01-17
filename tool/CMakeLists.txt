@@ -19,8 +19,9 @@ IF(BUILD_TESTING)
 	ADD_CUSTOM_COMMAND(
 		TARGET tool
 		POST_BUILD
-		COMMAND tool  "./obj/" "./mesh/" 0
-		COMMAND tool  "./mesh/" "./map/" 1
+		COMMAND tool  "./" 0
+		COMMAND tool  "./" 1
+		COMMAND tool  "./" 2
 		WORKING_DIRECTORY 	${CMAKE_SOURCE_DIR}/bin/
 		COMMENT  "gen map object and mesh object"
 	)

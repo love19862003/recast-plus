@@ -29,7 +29,7 @@ endif()
 
 add_dependencies(demo DebugUtils Detour DetourCrowd DetourTileCache Recast Plus)
 target_link_libraries(demo ${OPENGL_LIBRARIES} SDL2::SDL2main DebugUtils Detour DetourCrowd DetourTileCache Recast Plus)
-
+SET_TARGET_PROPERTIES(demo PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 install(TARGETS demo
         RUNTIME DESTINATION bin
         BUNDLE DESTINATION bin)

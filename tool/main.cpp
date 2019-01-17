@@ -1,6 +1,7 @@
 #include "NavObject.h"
 #include "NavResource.h"
 #include "NavMatrix.h"
+#include "NavTool.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -13,8 +14,11 @@
 enum Type{
   MESH = 0,
   SCENE = 1,
-  NAV = 3,
+  NAV = 2,
 };
+
+
+
 
 using namespace std;
 using namespace NavSpace;
@@ -40,6 +44,8 @@ void genMesh(const string& file, const std::string& out){
   if (!mesh->saveMesh(out)){
     std::cout << "save mesh:" << file << " with error" << std::endl;
   }
+
+  std::cout << "save mesh:" << file << "->" << out << std::endl;
 }
 
 void genMap(const std::string& file, const std::string& vol, const std::string& out){
@@ -55,66 +61,90 @@ void genMap(const std::string& file, const std::string& vol, const std::string& 
   if (!obj || !obj->saveMap(out)){
     std::cout << "save map:" << file << " with error" << std::endl;
   }
+
+  std::cout << "save map:" << file << (vol.empty() ? "" :  "&& " + vol) << "->" << out << std::endl;
 }
 
-void genNav(const string& file, const std::string& out){
-
+void genNav(const std::string& file, const std::string& out){
+  auto ptr = NavResource::readObject(file);
+  if (!ptr){
+      std::cout << "load Map:" << file << " with error" << std::endl;
+      return;
+  }
+  static rcContext ctx;
+  NavTool tool(&ctx);
+  tool.setScenePtr(ptr);
+  tool.build();
+  tool.saveNavMesh(out);
+  std::cout << "save nav:" << file <<  "->" << out << std::endl;
 }
+
+
 }
 
 
 int main(int argc,  const char** argv){
-  std::string path = "./obj/";
-  std::string out = "./mesh/";
-  Type t = SCENE;
-  if (t == SCENE){
-    out = "./map/";
-  }
-
-
+  std::string path = "./";
+  std::string out;
+  std::string in;
+  std::string vocPath;
+  Type t = NAV;
+  
   if (argc > 1){
     path = argv[1];
   }
-
   if (argc > 2){
-    out = argv[2];
-  }
-  if (argc > 3){
-    t = static_cast<Type>(stoi(argv[3]));
+    t = static_cast<Type>(stoi(argv[2]));
   }
 
-  scanDirectory(path, ".obj", fileList);
+
+  if (t == MESH){
+    in = path + OBJECT_PATH;
+    out = path + MESH_PATH;
+    scanDirectory(in, OBJ_TAG, fileList);
+   
+  }
+
   if (t == SCENE){
-    scanDirectoryAppend(path, ".mesh", fileList);
-    scanDirectoryAppend(path, ".voc", volumeList);
+    in = path + MESH_PATH;
+    out = path + MAP_PATH;
+    vocPath = path + VOC_PATH;
+    scanDirectory(in, MESH_TAG, fileList);
+    scanDirectoryAppend(vocPath, VOLUMECONN_TAG, volumeList);
+   
   }
 
   if (t == NAV){
-    scanDirectory(path, ".map", fileList);
+    in = path + MAP_PATH;
+    out = path + NAV_PATH;
+    scanDirectory(path + MAP_PATH, MAP_TAG, fileList);
+  }
+
+  if (in.empty() || out.empty()){
+    assert(false);
+    return 1;
   }
  
   for(auto& f : fileList){
-    auto file = path + f;
-    auto outFile = out + f;
+    auto file = in + f;
     switch (t){
-    case MESH:
-      GenSpace::genMesh(file, outFile);
-      break;
+    case MESH: {
+        auto outFile = out + setMagicTag(f, MESH_TAG);
+        GenSpace::genMesh(file, outFile);
+      }break;
     case SCENE:
       {
-        auto ext = f.find_last_of(".");
-        auto vol = file.substr(0, ext - 1) + ".voc";
-        if (std::find(volumeList.begin(), volumeList.end(), vol) == volumeList.end()){
-          vol = "";
-        }else{
-          vol = path + vol;
-        }
+        auto vol = setMagicTag(f, VOLUMECONN_TAG);
+        bool has = std::find(volumeList.begin(), volumeList.end(), vol) != volumeList.end();
+        vol = has ? vocPath + vol : "";
+        auto outFile = out + setMagicTag(f, MAP_TAG);
         GenSpace::genMap(file, vol, outFile);
       }
       break;
-    case NAV:
-      GenSpace::genNav(file, outFile);
-      break;
+    case NAV: {
+        auto outFile = out + setMagicTag(f, NAVMESH_TAG);
+        GenSpace::genNav(file, outFile);
+      }break;
     default:
       break;
     }

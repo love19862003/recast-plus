@@ -15,19 +15,13 @@
 *********************************************************************/
 #ifndef __MyJson_H__
 #define __MyJson_H__
-#include <boost/noncopyable.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 
   namespace Utility {
      class MyJson
      {
-     private:
-       MyJson(const MyJson&) = delete;
-       MyJson& operator = (const MyJson&) = delete;
      public:
        explicit MyJson(const std::string& file) : m_tree(){
            try{
@@ -66,13 +60,10 @@
        template < typename T>
        void getArray(const std::string& path, std::vector<T>& container) const {
          using boost::property_tree::ptree;
-         try{
-           BOOST_FOREACH(const ptree::value_type& v, m_tree.get_child(path)){
-             container.push_back(boost::lexical_cast<T>(v.second.data()));
-           }
-         }catch (...)
-         {
-         }            
+         auto& node = m_tree.get_child(path);
+         for (auto& it : node){
+           container.push_back(it.second.get_value<T>());
+         }         
        }
 
        template < typename T>
@@ -87,8 +78,9 @@
                      std::vector<T>& container, 
                      std::function<T(const MyJson&)> fun) const {
          using boost::property_tree::ptree;
-         BOOST_FOREACH(const ptree::value_type& v, m_tree.get_child(path)) {
-           MyJson t(v.second);
+         auto& node = m_tree.get_child(path);
+         for (auto& it : node){
+           MyJson t(it.second);
            container.push_back(fun(t));
          }
        }

@@ -13,8 +13,45 @@
 *************************************************/
 #pragma once
 #include <string>
-#include "NavObject.h"
+#include "NavCommon.h"
 namespace NavSpace{
+
+  static const std::string OBJECT_PATH = "./obj/";
+  static const std::string MESH_PATH = "./mesh/";
+  static const std::string NAV_PATH = "./nav/";
+  static const std::string MAP_PATH = "./map/";
+  static const std::string DUMP_PATH = "./dump/";
+  static const std::string VOC_PATH = "./voc/";
+
+  static const std::string MESH_TAG = ".mesh";
+  static const std::string MAP_TAG = ".map";
+  static const std::string VOLUMECONN_TAG = ".voc";
+  static const std::string OBJ_TAG = ".obj";
+  static const std::string DUMP_TAG = ".dump";
+  static const std::string NAVMESH_TAG = ".nav";
+
+
+
+  inline bool hasMagicTag(const std::string& path, const std::string& tag){
+    auto npos = path.find_last_of(".");
+    if (npos == std::string::npos || path.substr(npos) != tag){
+      return false;
+    }
+    return true;
+  }
+
+  inline std::string setMagicTag(const std::string& file, const std::string& tag){
+    auto path = file;
+    auto npos = path.find_last_of(".");
+    if (npos != std::string::npos){
+      if (path.substr(npos) != tag){
+        path = path.substr(0, npos) + tag;
+      }
+    } else{
+      path += tag;
+    }
+    return path;
+  }
 
   class NavResource{
   public:

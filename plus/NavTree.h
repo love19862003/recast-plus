@@ -16,14 +16,14 @@
 namespace NavSpace{
   
   constexpr size_t treeChildCount(){ return 2; }
-  typedef std::array<float, 3> Coor;
+
   struct MeshBouns{
     MeshBouns(){
       bmin.fill(0.f);
       bmax.fill(0.f);
     }
-    Coor bmin;
-    Coor bmax;
+    NavPos bmin;
+    NavPos bmax;
   };
 
   struct TreeBouns{

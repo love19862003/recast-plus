@@ -22,6 +22,7 @@ struct rcCompactHeightfield;
 struct rcPolyMesh;
 struct rcPolyMeshDetail;
 struct rcContourSet;
+struct duDebugDraw;
 
 namespace NavSpace{
   class NavScene;
@@ -29,15 +30,11 @@ namespace NavSpace{
   struct BuildOffMeshData;
   typedef std::unique_ptr<BuildOffMeshData> BuildOffMeshConPtr;
 
-  class NavScene  : public NonCopyAble
+  class NavScene
   {
   public:
-    enum SCENE_TYPE{
-      RUN_TIME,
-      RUN_TOOL,
-    };
-    explicit NavScene(SCENE_TYPE type){;}
-    virtual ~NavScene(){}
+    explicit NavScene();
+    virtual ~NavScene();
     
     typedef Utility::ObjPtrMap<MeshId, Mesh> MeshMap;
     typedef Utility::ObjPtrMap<MObjId, MeshObject> ObjectMap;
@@ -48,9 +45,17 @@ namespace NavSpace{
       unsigned char* data;
       size_t size;
     };
-    virtual void handleReander() = 0;
     virtual bool buildTile(const TileIndex& tile) = 0;
-  private:
+    virtual bool saveDump(const std::string& path);
+    virtual bool loadDump(const std::string& path);
+
+    const NavSetting& setting() const{ return m_setting; }
+
+
+  protected:
+    bool setScene(const std::string& file);
+    const std::string& sceneFile() const{ return m_sceneFile; }
+
     TileNavCache buildTileCache(rcContext* ctx,
                                 rcConfig* cf,
                                 rcHeightfield* solid,
@@ -71,6 +76,7 @@ namespace NavSpace{
                                   const float bmax[3],
                                   size_t& dataSize);
 
+  public:
     const float* getOffMeshConnectionVerts() const;
     const float* getOffMeshConnectionRads() const;
     const unsigned char* getOffMeshConnectionDirs() const;
@@ -81,12 +87,13 @@ namespace NavSpace{
 
   protected:
     void offMeshConBuild() const;
+    void offMeshReset() const;
   protected:
     ObjectMap m_objects;
     MeshMap m_meshs;
     NavSetting m_setting;
-    SCENE_TYPE m_type;
     mutable BuildOffMeshConPtr m_buildOff;
+    std::string m_sceneFile;
   };
 
 }

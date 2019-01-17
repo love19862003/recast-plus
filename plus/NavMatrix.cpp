@@ -16,7 +16,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/operation.hpp>
 namespace NavSpace{
-  void Matirx::matirx(float* out, const float in[3], const WorldPos& w){
+  void Matirx::matirx(float* out, const float in[3], const WorldItem& w){
     namespace ublas = boost::numeric::ublas;
     ublas::vector<float> vec(4);
     ublas::matrix<float> m(4, 4, 0.f);

@@ -18,16 +18,14 @@
 #include "NavVolumeConn.h"
 #include "NavMatrix.h"
 
-
 struct rcConfig;
 class rcContext;
 struct rcHeightfield;
 struct rcCompactHeightfield;
+class ConvexVolumeTool;
+
 namespace NavSpace{
-  class Mesh;
-  typedef std::shared_ptr<Mesh> MeshPtr;
-  class MeshObject;
-  typedef std::shared_ptr<MeshObject> ObjectPtr;
+  
 
   typedef Pool<float, 3> VertPool;
   typedef Pool<int, 3> TriPool;
@@ -61,13 +59,17 @@ namespace NavSpace{
 
   class MeshObject : public  NavDataBase , public NonCopyAble{
   public:
-    explicit MeshObject(MObjId id, MeshPtr mesh, const WorldPos& pos);
+    explicit MeshObject(MObjId id, MeshPtr mesh, const WorldItem& pos);
     virtual ~MeshObject();
     bool rasterizeTriangles(rcContext* ctx, const rcConfig& cfg, rcHeightfield& solid);
     bool raycastMesh(float* src, float* dst, float& tmin);
     void markVolume(rcContext* ctx, rcCompactHeightfield& chf);
     bool saveMap(const std::string& name);
     const VolumeOffCon& volumeOffConns() const{ return m_volumeOffConn; }
+
+
+    inline MObjId id() const{ return m_id; }
+    inline const WorldItem& item() const{ return m_pos; }
 
   private:
     explicit MeshObject(MObjId id);
@@ -79,12 +81,14 @@ namespace NavSpace{
     void initVolumeOffConn();
   private:
     MObjId m_id;
-    WorldPos m_pos;
+    WorldItem m_pos;
     TreeNode* m_tree;
     size_t m_maxTriPerChunk;
     VolumeOffCon m_volumeOffConn;
     NormalPool m_normals;
-    friend class NavResource;   
+    friend class NavResource;
+    friend class NavTool;
+    friend class ConvexVolumeTool;
   };
 
 

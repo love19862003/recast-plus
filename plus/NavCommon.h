@@ -14,11 +14,13 @@
 #pragma once
 #include <functional>
 #include <vector>
+#include <array>
 namespace NavSpace{
   typedef unsigned int MObjId;
   typedef unsigned int MeshId;
   typedef std::vector<MObjId> MObjList;
   typedef std::function<void(const MObjList&, const MObjList&)> NotifyCall;
+  typedef std::array<float, 3> NavPos;
 
   enum {
     INVALID_MOBJ_ID = 0,
@@ -66,13 +68,36 @@ namespace NavSpace{
     float detailSampleDist;
     float detailSampleMaxError;
     int   partitionType;
-    bool filterLowHangingObstacles;
-    bool filterLedgeSpans;
-    bool filterWalkableLowHeightSpans;
+    bool  filterLowHangingObstacles;
+    bool  filterLedgeSpans;
+    bool  filterWalkableLowHeightSpans;
     
     float tileSize;
     float navBmin[3];
     float navBmax[3];
+
+    NavSetting(){
+      cellSize = 0.3f;
+      cellHeight = 0.2f;
+      agentHeight = 2.0f;
+      agentRadius = 0.6f;
+      agentMaxClimb = 0.9f;
+      agentMaxSlope = 45.0f;
+      regionMinSize = 8;
+      regionMergeSize = 20;
+      edgeMaxLen = 12.0f;
+      edgeMaxError = 1.3f;
+      vertsPerPoly = 6.0f;
+      detailSampleDist = 6.0f;
+      detailSampleMaxError = 1.0f;
+      partitionType = SAMPLE_PARTITION_WATERSHED;
+      filterLowHangingObstacles = true;
+      filterLedgeSpans = true;
+      filterWalkableLowHeightSpans = true;
+      tileSize = 32;
+      navBmin[0] = navBmin[1] = navBmin[2] = 0.f;
+      navBmax[0] = navBmax[1] = navBmax[2] = 0.f;
+    }
   };
 
   class NonCopyAble{
@@ -85,5 +110,28 @@ namespace NavSpace{
     NonCopyAble& operator=(const NonCopyAble&) = delete;
   };
 
+  struct WorldItem{
+
+    WorldItem(){
+      m_pos.fill(0.f);
+      m_o = 0.f;
+      m_scale = 1.f;
+      m_mesh = INVALID_MESH_ID;
+    }
+
+    NavPos m_pos;
+    float m_o;
+    float m_scale;
+    MeshId m_mesh;
+  };
+
+
+  class Mesh;
+  typedef std::shared_ptr<Mesh> MeshPtr;
+  class MeshObject;
+  typedef std::shared_ptr<MeshObject> ObjectPtr;
+  struct VolumeOffCon;
+  struct TreeNode;
+  struct NavDataBase;
 }
 

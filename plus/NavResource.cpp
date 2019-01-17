@@ -12,38 +12,13 @@
  * \note
 *************************************************/
 #include <fstream>
-
+#include "NavObject.h"
 #include "NavResource.h"
 
 namespace NavSpace{
   static const unsigned int MESH_MAGIC = '1' << 24 | '0' << 16 | '0' << 8 | '0';
   static const unsigned int MAP_MAGIC = '9' << 24 | '0' << 16 | '0' << 8 | '0';
   static const unsigned int VOLUME_OFF_MAGIC = '1' << 24 | '0' << 16 | '0' << 8 | '0';
-  static const std::string MESH_TAG = ".mesh";
-  static const std::string MAP_TAG = ".map";
-  static const std::string VOLUME_CONN = ".voc";
-
-  static bool hasMagicTag(const std::string& path, const std::string& tag){
-    auto npos = path.find_last_of(".");
-    if (npos == std::string::npos || path.substr(npos) != tag){
-      return false;
-    }
-    return true;
-  }
-
-  static std::string setMagicTag(const std::string& file, const std::string& tag) {
-    auto path = file;
-    auto npos = path.find_last_of(".");
-    if (npos != std::string::npos){
-      if (path.substr(npos) != tag){
-        path = path.substr(0, npos) + tag;
-      }
-    } else{
-      path += tag;
-    }
-    return path;
-  }
-
 #pragma pack(push, 1)
   struct DataBaseHeader{
     unsigned int version;
@@ -65,7 +40,7 @@ namespace NavSpace{
 
   bool NavResource::readVOF(const std::string& file, VolumeOffCon& volumeOff){
   
-    if (!hasMagicTag(file, VOLUME_CONN)){
+    if (!hasMagicTag(file, VOLUMECONN_TAG)){
       return false;
     }
 
@@ -84,9 +59,9 @@ namespace NavSpace{
 
   }
   bool NavResource::writeVOF(const std::string& file, const VolumeOffCon& data){
-    auto path = setMagicTag(file, VOLUME_CONN);
+    auto path = setMagicTag(file, VOLUMECONN_TAG);
     try{
-      std::ofstream ofile(path, std::ios::out | std::ios::binary);
+      std::ofstream ofile(path, std::ios::out | std::ios::binary | std::ios::trunc);
       writeVolumeOffConn(ofile, data);
       ofile.close();
       return true;
@@ -120,7 +95,7 @@ namespace NavSpace{
     auto path = setMagicTag(file, MESH_TAG);
     
     try{
-        std::ofstream ofile(path, std::ios::out | std::ios::binary);
+        std::ofstream ofile(path, std::ios::out | std::ios::binary | std::ios::trunc);
         writeBase(ofile, mesh);
         ofile.close();
         return true;
@@ -182,7 +157,7 @@ namespace NavSpace{
   bool NavResource::writeObject(const std::string& file, const MeshObject& obj){
     auto path = setMagicTag(file, MAP_TAG);
     try{
-      std::ofstream ofile(path, std::ios::out | std::ios::binary);
+      std::ofstream ofile(path, std::ios::out | std::ios::binary | std::ios::trunc);
       writeBase(ofile, obj);
       DataMapHeader header;
       header.version = MAP_MAGIC;

@@ -124,7 +124,7 @@ namespace NavSpace{
 
     inline size_t maxCount() const{ return m_max; }
 
-    inline const VALUE* pool(size_t index = 0) const{ assert(index < m_count); return m_pool + index * _Size; }
+    inline const VALUE* pool(size_t index = 0) const{ /*assert(index < m_count);*/ return m_pool + index * _Size; }
 
     inline const VALUE& value(size_t index = 0) const{ assert(index < m_count);  return *pool(index); }
 

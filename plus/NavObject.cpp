@@ -49,7 +49,7 @@ namespace NavSpace{
           bouns.bmin[i] = arr[i];
         }
         if (bouns.bmax[i] < arr[i]){
-          bouns.bmin[i] = arr[i];
+          bouns.bmax[i] = arr[i];
         }
       }
     }
@@ -118,10 +118,11 @@ namespace NavSpace{
     return res;
   }
 
-  MeshObject ::MeshObject(MObjId id, MeshPtr mesh, const WorldPos& pos) : NavDataBase(), m_id(id), m_pos(pos){
+  MeshObject ::MeshObject(MObjId id, MeshPtr mesh, const WorldItem& pos) : NavDataBase(), m_id(id), m_pos(pos){
     assert(m_pos.m_mesh == mesh->id());
     assert(mesh);
     m_tree = nullptr;
+    m_maxTriPerChunk = 0;
     initFromMesh(mesh);
   }
 
@@ -131,6 +132,7 @@ namespace NavSpace{
     m_pos.m_pos.fill(0.f);
     m_pos.m_scale = 1.0f;
     m_tree = nullptr;
+    m_maxTriPerChunk = 0;
   }
   
   MeshObject::~MeshObject(){
@@ -173,6 +175,7 @@ namespace NavSpace{
       if (num > maxTriPerChunk){
         maxTriPerChunk = num;
       }
+      assert(maxTriPerChunk <= per);
     }else{
       node->leaf = false;
       calExtends(items, min, max, node);
@@ -190,7 +193,7 @@ namespace NavSpace{
         int is = min + i * nodeCount;
         int ie = is + nodeCount;
         if(i == treeChildCount() - 1){ ie = max;}
-        subdivide(items, nitems, is, ie, depth, node, maxTriPerChunk);
+        subdivide(items, nitems, is, ie, depth, node->child[i], maxTriPerChunk);
       }
     }
   }

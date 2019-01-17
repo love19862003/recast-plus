@@ -19,6 +19,8 @@
 #include "RecastAlloc.h"
 #include "DetourNavMeshBuilder.h"
 #include "DetourNavMesh.h"
+#include "MyJson.h"
+#include "NavResource.h"
 namespace NavSpace{
 
   typedef Pool<float, 3 * 2> OffMeshConVertsPool;
@@ -37,6 +39,179 @@ namespace NavSpace{
     int count;
   };
 
+
+  NavScene::NavScene(){
+  
+  }
+  NavScene::~NavScene(){
+  }
+
+  bool NavScene::setScene(const std::string& file){
+    if (!hasMagicTag(file, MAP_TAG) || m_objects.hasData(INVALID_MOBJ_ID)){
+      assert(false);
+      return false;
+    }
+    auto ptr = NavResource::readObject(MAP_PATH + file);
+    if (!ptr){
+      assert(false);
+      return false;
+    }
+    bool res = m_objects.addData(ptr->id(), ptr);
+    dtVcopy(m_setting.navBmin, ptr->m_bouns.bmin.data());
+    dtVcopy(m_setting.navBmax, ptr->m_bouns.bmax.data());
+    m_sceneFile = file;
+    return res;
+  }
+  bool NavScene::saveDump(const std::string& name){
+    auto file = DUMP_PATH + setMagicTag(name, DUMP_TAG);
+    try{
+        Utility::MyJson json;
+        json.set("setting.cellSize", m_setting.cellSize);
+        json.set("setting.cellHeight", m_setting.cellHeight);
+        json.set("setting.agentHeight", m_setting.agentHeight);
+        json.set("setting.agentRadius", m_setting.agentRadius);
+        json.set("setting.agentMaxClimb", m_setting.agentMaxClimb);
+        json.set("setting.agentMaxSlope", m_setting.agentMaxSlope);
+        json.set("setting.regionMinSize", m_setting.regionMinSize);
+        json.set("setting.regionMergeSize", m_setting.regionMergeSize);
+        json.set("setting.edgeMaxLen", m_setting.edgeMaxLen);
+        json.set("setting.edgeMaxError", m_setting.edgeMaxError);
+        json.set("setting.vertsPerPoly", m_setting.vertsPerPoly);
+        json.set("setting.detailSampleDist", m_setting.detailSampleDist);
+        json.set("setting.detailSampleMaxError", m_setting.detailSampleMaxError);
+        json.set("setting.partitionType", m_setting.partitionType);
+        json.set("setting.filterLowHangingObstacles", m_setting.filterLowHangingObstacles);
+        json.set("setting.filterLedgeSpans", m_setting.filterLedgeSpans);
+        json.set("setting.filterWalkableLowHeightSpans", m_setting.filterWalkableLowHeightSpans);
+        json.set("setting.tileSize", m_setting.tileSize);
+        json.set("setting.navBmin.x", m_setting.navBmin[0]);
+        json.set("setting.navBmin.y", m_setting.navBmin[1]);
+        json.set("setting.navBmin.z", m_setting.navBmin[2]);
+        json.set("setting.navBmax.x", m_setting.navBmax[0]);
+        json.set("setting.navBmax.y", m_setting.navBmax[1]);
+        json.set("setting.navBmax.z", m_setting.navBmax[2]);
+
+        std::vector<Utility::MyJson> meshs;
+        m_meshs.forEachValue([&meshs](const MeshPtr& ptr){
+          if (!ptr) return;
+          Utility::MyJson tree;
+          tree.set("mesh", ptr->name());
+          tree.set("id", ptr->id());
+          meshs.push_back(tree);
+        });
+
+        json.set("scene", sceneFile());
+
+        json.addTreeArray("mesh", meshs);
+        std::vector<Utility::MyJson> objects;
+        m_objects.forEachValue([&objects](const ObjectPtr& ptr){
+          if (!ptr || ptr->id() == INVALID_MOBJ_ID) return;
+          const WorldItem& item = ptr->item();
+          Utility::MyJson tree;
+          tree.set("id", ptr->id());
+          tree.set("world.mesh", item.m_mesh);
+          tree.set("world.x", item.m_pos[0]);
+          tree.set("world.y", item.m_pos[1]);
+          tree.set("world.z", item.m_pos[2]);
+          tree.set("world.o", item.m_o);
+          tree.set("world.scale", item.m_scale);
+          objects.push_back(tree);
+        });
+        json.addTreeArray("object", objects);
+        bool res = json.saveToFile(file);
+        assert(res);
+        return res;
+    }catch(...){
+      return false;
+    }
+  }
+  bool NavScene::loadDump(const std::string& file){
+    if (!hasMagicTag(file, DUMP_TAG)){
+      return false;
+    }
+    try{
+      Utility::MyJson json(DUMP_PATH + file);
+      m_setting.cellSize = json.get("setting.cellSize", m_setting.cellSize);
+      m_setting.cellHeight = json.get("setting.cellHeight", m_setting.cellHeight);
+      m_setting.agentHeight = json.get("setting.agentHeight", m_setting.agentHeight);
+      m_setting.agentRadius = json.get("setting.agentRadius", m_setting.agentRadius);
+      m_setting.agentMaxClimb = json.get("setting.agentMaxClimb", m_setting.agentMaxClimb);
+      m_setting.agentMaxSlope = json.get("setting.agentMaxSlope", m_setting.agentMaxSlope);
+      m_setting.regionMinSize = json.get("setting.regionMinSize", m_setting.regionMinSize);
+      m_setting.regionMergeSize = json.get("setting.regionMergeSize", m_setting.regionMergeSize);
+      m_setting.edgeMaxLen = json.get("setting.edgeMaxLen", m_setting.edgeMaxLen);
+      m_setting.edgeMaxError = json.get("setting.edgeMaxError", m_setting.edgeMaxError);
+      m_setting.vertsPerPoly = json.get("setting.vertsPerPoly", m_setting.vertsPerPoly);
+      m_setting.detailSampleDist = json.get("setting.detailSampleDist", m_setting.detailSampleDist);
+      m_setting.detailSampleMaxError = json.get("setting.detailSampleMaxError", m_setting.detailSampleMaxError);
+      m_setting.partitionType = json.get("setting.partitionType", m_setting.partitionType);
+      m_setting.filterLowHangingObstacles = json.get("setting.filterLowHangingObstacles", m_setting.filterLowHangingObstacles);
+      m_setting.filterLedgeSpans = json.get("setting.filterLedgeSpans", m_setting.filterLedgeSpans);
+      m_setting.filterWalkableLowHeightSpans = json.get("setting.filterWalkableLowHeightSpans", m_setting.filterWalkableLowHeightSpans);
+      m_setting.tileSize = json.get("setting.tileSize", m_setting.tileSize);
+      m_setting.navBmin[0] = json.get("setting.navBmin.x", m_setting.navBmin[0]);
+      m_setting.navBmin[1] = json.get("setting.navBmin.y", m_setting.navBmin[1]);
+      m_setting.navBmin[2] = json.get("setting.navBmin.z", m_setting.navBmin[2]);
+      m_setting.navBmax[0] = json.get("setting.navBmax.x", m_setting.navBmax[0]);
+      m_setting.navBmax[1] = json.get("setting.navBmax.y", m_setting.navBmax[1]);
+      m_setting.navBmax[2] = json.get("setting.navBmax.z", m_setting.navBmax[2]);
+
+      typedef std::tuple<MeshId, std::string> MeshData;
+      std::vector<MeshData> meshs;
+      json.getGroup<MeshData>("mesh", meshs, [](const Utility::MyJson& tree){
+        MeshData data;
+        std::get<0>(data) = tree.get("id", MeshId(INVALID_MESH_ID));
+        std::get<1>(data) = tree.get("mesh", std::string());
+        return data;
+      });
+
+      std::string scene = json.get("scene", std::string());
+      if (!setScene(scene)){ assert(false); return false; }
+
+      typedef std::tuple<MObjId, WorldItem> ObjectData;
+      std::vector<ObjectData> objects;
+      json.getGroup<ObjectData>("object", objects, [](const Utility::MyJson& tree){
+        ObjectData data;
+        std::get<0>(data) = tree.get("id", MObjId(INVALID_MOBJ_ID));
+        WorldItem& item = std::get<1>(data);
+        item.m_mesh = tree.get("world.mesh", MeshId(INVALID_MESH_ID));
+        item.m_pos[0] = tree.get("world.x", 0.f);
+        item.m_pos[1] = tree.get("world.y", 0.f);
+        item.m_pos[2] = tree.get("world.z", 0.f);
+        item.m_o = tree.get("world.o", 0.f);
+        item.m_scale = tree.get("world.scale", 1.f);
+        assert(std::get<0>(data) != INVALID_MOBJ_ID);
+        return data;
+      });
+
+      std::sort(meshs.begin(), meshs.end(), [](const MeshData&l, const MeshData& r){ return std::get<0>(l) < std::get<0>(r); });
+      std::sort(objects.begin(), objects.end(), [](const ObjectData&l, const ObjectData& r){ return std::get<0>(l) < std::get<0>(r); });
+
+      for (auto& mesh : meshs){
+        MeshPtr m = Mesh::loadMesh(std::get<0>(mesh), std::get<1>(mesh));
+        assert(m);
+        if (!m){ assert(false); continue; }
+        if (!m_meshs.addData(m->id(), m)){ assert(false); continue; }
+      }
+
+      for (auto& obj : objects){
+        MObjId id = std::get<0>(obj);
+        const WorldItem& item = std::get<1>(obj);
+        assert(id != INVALID_MOBJ_ID);
+        if (id == INVALID_MOBJ_ID){ assert(false); continue; }
+        MeshPtr ptr = m_meshs.getData(item.m_mesh);
+        if (!ptr){ assert(false); continue; }
+        ObjectPtr object = std::make_shared<MeshObject>(id, ptr, item);
+        assert(object);
+        if (!object){ assert(false); continue; }
+        if (!m_objects.addData(id, object)){ assert(false); continue; }
+      }
+
+      return true;
+    } catch (...){ 
+      return false;
+    }
+  }
 
   NavScene::TileNavCache NavScene::buildTileCache(rcContext* ctx,
                                                   rcConfig* cfg,
@@ -65,21 +240,6 @@ namespace NavSpace{
     buildmax[0] = bmin[0] + tile.first * tcs + tcs;
     buildmax[1] = bmax[1];
     buildmax[2] = bmin[2] + tile.second * tcs + tcs;
-
-//     rcHeightfield* solid = rcAllocHeightfield();
-//     rcCompactHeightfield* chf = rcAllocCompactHeightfield();
-//     rcPolyMesh* pmesh = rcAllocPolyMesh();
-//     rcPolyMeshDetail* dmesh = rcAllocPolyMeshDetail();
-//     rcContourSet* cset = rcAllocContourSet();
-// 
-//     Utility::GuardFun exitFun([&](){
-//       rcFreeHeightField(solid);
-//       rcFreeCompactHeightfield(chf);
-//       rcFreePolyMesh(pmesh);
-//       rcFreePolyMeshDetail(dmesh);
-//       rcFreeContourSet(cset);
-//     });
-//     rcConfig cfg ;
 
     unsigned char* data = buildTileReal(ctx, cfg, solid, chf, pmesh, dmesh, cset, tile, buildmin, buildmax, cache.size);
     if(data){
@@ -317,6 +477,18 @@ namespace NavSpace{
     return navData;
   }
 
+  void NavScene::offMeshReset() const{
+    if (m_buildOff){
+      m_buildOff->count = 0;
+      m_buildOff->verts.reset();
+      m_buildOff->rads.reset();
+      m_buildOff->ids.reset();
+      m_buildOff->dirs.reset();
+      m_buildOff->areas.reset();
+      m_buildOff->flags.reset();
+      m_buildOff->dirs.reset();
+    }
+  }
   void NavScene::offMeshConBuild() const{
     if (!m_buildOff){
       m_buildOff.reset(new BuildOffMeshData);

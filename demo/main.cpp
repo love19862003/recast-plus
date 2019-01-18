@@ -630,34 +630,26 @@ int main(int /*argc*/, char** /*argv*/)
 			{
 				meshName = *levelToLoad;
 				showLevels = false;
-				
-				
-        bool res = true;
 			  sample->handleMeshChanged(meshName);
+        auto& setting = sample->setting();
+				const float* bmin = setting.navBmin;
+				const float* bmax = setting.navBmax;
 				
-
-				if (true)
-				{
-          auto& setting = sample->setting();
-					const float* bmin = setting.navBmin;
-					const float* bmax = setting.navBmax;
+				// Reset camera and fog to match the mesh bounds.
+        if (bmin && bmax){
+          camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+                        rcSqr(bmax[1] - bmin[1]) +
+                        rcSqr(bmax[2] - bmin[2])) / 2;
+          cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+          cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+          cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+          camr *= 3;
+        }
+        cameraEulers[0] = 45;
+        cameraEulers[1] = -45;
+        glFogf(GL_FOG_START, camr * 0.1f);
+        glFogf(GL_FOG_END, camr * 1.25f);
 				
-					// Reset camera and fog to match the mesh bounds.
-					if (bmin && bmax)
-					{
-						camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-									 rcSqr(bmax[1]-bmin[1]) +
-									 rcSqr(bmax[2]-bmin[2])) / 2;
-						cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-						cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-						cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-						camr *= 3;
-					}
-					cameraEulers[0] = 45;
-					cameraEulers[1] = -45;
-					glFogf(GL_FOG_START, camr * 0.1f);
-					glFogf(GL_FOG_END, camr * 1.25f);
-				}
 			}
 			
 			imguiEndScrollArea();

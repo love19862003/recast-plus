@@ -39,46 +39,57 @@ namespace NavSpace{
     }
   }
 
-  static void calMeshBouns(const VertPool::ARRAY& arr, MeshBouns& bouns, bool fource){
-    if (fource){
-      bouns.bmin = arr;
-      bouns.bmax = arr;
-    } else{
-      for (size_t i = 0; i < arr.size(); ++i){
-        if (bouns.bmin[i] >  arr[i]){
-          bouns.bmin[i] = arr[i];
-        }
-        if (bouns.bmax[i] < arr[i]){
-          bouns.bmax[i] = arr[i];
-        }
+  static bool checkAssert(TreeNode* node,  const std::function<bool(TreeNode*)>& fun){
+    if (!node || !fun){
+      return false;
+    }
+
+    bool r = fun(node);
+    for (auto& c : node->child){
+      if (c && checkAssert(c, fun)){
+        assert(r);
+        break;
+      }
+    }
+    return r;
+  }
+
+  
+
+  static void calMeshBouns(const float* arr, MeshBouns& bouns, bool fource){
+    for (size_t i = 0; i < 3; ++i){
+      if (fource || bouns.bmin[i] > arr[i]){
+        bouns.bmin[i] = arr[i];
+      }
+      if (fource || bouns.bmax[i] < arr[i]){
+        bouns.bmax[i] = arr[i];
       }
     }
   }
 
-  static void calMeshBouns(const float* v, MeshBouns& bouns, bool fource){
-    VertPool::ARRAY arr;
-    for (size_t i = 0; i < arr.size(); ++i){ 
-      arr[i] = v[i];
-    }
-    calMeshBouns(arr, bouns, fource);
-  }
-
-  static void calTreeBouns(const VertPool::ARRAY& arr, TreeBouns& bouns, bool fource){
-    MeshBouns b;
-    calMeshBouns(arr, b, fource);
-    bouns.fill(b);
-  }
-
   static void calTreeBouns(const float* v, TreeBouns& bouns, bool fource){
-    MeshBouns b;
-    calMeshBouns(v, b, fource);
-    bouns.fill(b);
+    if (fource || bouns.bmin[0] > v[0]){
+      bouns.bmin[0] = v[0];
+    }
+    if (fource || bouns.bmax[0] < v[0]){
+      bouns.bmax[0] = v[0];
+    }
+
+    if (fource || bouns.bmin[1] > v[2]){
+      bouns.bmin[1] = v[2];
+    }
+    if (fource || bouns.bmax[1] < v[2]){
+      bouns.bmax[1] = v[2];
+    }
   }
   
   void NavDataBase::calcuteBouns(){
     m_verts.call([this](const float* v, size_t index){
       calMeshBouns(v, m_bouns, index == 0);
     });
+    assert(m_bouns.bmax[0] > m_bouns.bmin[0]);
+    assert(m_bouns.bmax[1] > m_bouns.bmin[1]);
+    assert(m_bouns.bmax[2] > m_bouns.bmin[2]);
   }
 
 
@@ -147,7 +158,7 @@ namespace NavSpace{
 
   static void calExtends(const BoundsItem& item, TreeNode* node, bool fource){
     if(fource){
-      node->bouns = item.bouns;
+      node->bouns.copy(item.bouns);
     }else{
       node->bouns.meger(item.bouns);
     }
@@ -159,6 +170,12 @@ namespace NavSpace{
     }
   }
 
+  static bool compareXX(const BoundsItem& l, const BoundsItem& r){
+    return l.bouns.bmin[0] > r.bouns.bmin[0];
+  }
+  static bool compareYY(const BoundsItem& l, const BoundsItem& r){
+    return l.bouns.bmin[1] > r.bouns.bmin[1]; 
+  }
   static void subdivide(BoundsItem* items, int nitems, int min, int max, int&depth, TreeNode* node, size_t& maxTriPerChunk){
     if (!node) return;
     int num = max - min;
@@ -180,10 +197,10 @@ namespace NavSpace{
       node->leaf = false;
       calExtends(items, min, max, node);
       auto& b = node->bouns;
-      if (b.bmax[0] - b.bmin[0] > b.bmax[1] - b.bmin[1]){
-        std::sort(items + min, items + max, [](const BoundsItem& l, const BoundsItem& r){return l.bouns.bmin[0] > r.bouns.bmin[0]; });
+      if (node->bouns.logxy()){
+        std::sort(items + min, items + max, compareXX);
       }else{
-        std::sort(items + min, items + max, [](const BoundsItem& l, const BoundsItem& r){return l.bouns.bmin[1] > r.bouns.bmin[1]; });
+        std::sort(items + min, items + max, compareYY);
       }
 
       int nodeCount = num / treeChildCount();
@@ -229,6 +246,7 @@ namespace NavSpace{
       float in[3];
       dtVcopy(in, v);
       Matirx::matirx(v, in, m_pos);
+      assert(m_id != INVALID_MOBJ_ID || dtVequal(v, in));
     });
     initVolumeOffConn();
     //¼ÆËã°üÎ§ºÐ
@@ -236,7 +254,7 @@ namespace NavSpace{
     size_t ntri = m_tris.count();
     BoundsItem* items = new BoundsItem[ntri];
     if (!items) return false;
-    m_tris.call([items, this](const int* tri, size_t index){
+    m_tris.call([&items, this](const int* tri, size_t index){
       items[index].tri = index;
       assert(tri[0] < m_verts.count());
       assert(tri[1] < m_verts.count());
@@ -248,18 +266,19 @@ namespace NavSpace{
       calTreeBouns(v1, items[index].bouns, false);
       calTreeBouns(v2, items[index].bouns, false);
 
+      //cal tri normal
       float nor[3];
       calNormal(nor, v0, v1, v2);
       m_normals.add(nor, 1);
     });
+    
 
     int depth = 0;
     m_tree = new TreeNode;
     if (!m_tree) return false;
+    m_tree->bouns.fill(m_bouns);
     subdivide(items, ntri, 0, ntri, depth, m_tree, m_maxTriPerChunk);
     delete[] items;
-
-    calcuteNormals();
     return true;
   }
 
@@ -342,12 +361,10 @@ namespace NavSpace{
     std::list<TreeNode*> res;
     checkVisit(m_tree, [&b, &res](TreeNode* node){
       const bool overlap = checkOverlapRect(b, node->bouns);
-      if (overlap){
-        if (node->leaf){ res.push_back(node); }
-        return true;
-      } else{
-        return false;
+      if (overlap && node->leaf){
+        res.push_back(node);
       }
+      return true;
     });
     return res;
   }
@@ -358,12 +375,10 @@ namespace NavSpace{
     std::list<TreeNode*> res;
     checkVisit(m_tree, [&b,&res](TreeNode* node){
       const bool overlap = checkOverlapSegment(b, node->bouns);
-      if (overlap){
-        if (node->leaf){ res.push_back(node); }
-        return true;
-      }else{
-        return false;
+      if (overlap && node->leaf){
+        res.push_back(node);
       }
+      return overlap;
     });
     return res;
   }
@@ -377,18 +392,16 @@ namespace NavSpace{
     TriPool pool;
     pool.resize(m_maxTriPerChunk);
     auto list = getOverlappingRect(bouns);
-
     for (auto& node : list){
-
-      if (!node->leaf || node->num <= 0){
-        continue;
-      }
+      assert(node->leaf);
+      assert(node->num > 0); 
       pool.reset();
-      pool.resize(node->tris.count());
-      node->tris.call([&pool, this](const size_t* tri, size_t){
-        pool.add(m_tris.pool(*tri), 1);
+      node->tris.call([&pool, this](const size_t* idx, size_t){
+        size_t triIndex = *idx;
+        assert(triIndex < m_tris.count());
+        const int* tri = m_tris.pool(triIndex);
+        pool.add(tri);
       });
-
       assert(pool.count() <= m_maxTriPerChunk);
       memset(triareas, 0, pool.count() * sizeof(unsigned char));
       rcMarkWalkableTriangles(ctx, cfg.walkableSlopeAngle, m_verts.pool(), m_verts.count(), pool.pool(), pool.count(), triareas);
@@ -487,19 +500,14 @@ namespace NavSpace{
       return false;
     }
 
-    TriPool pool;
-    pool.resize(m_maxTriPerChunk);
+    tmin = 1.f;
     bool hit = false;
-    const float* vert = m_verts.pool(0);
     for (auto& node : list){
-      if (!node->leaf){
-        continue;
-      }
-      pool.reset();
-      pool.resize(node->tris.count());
-      node->tris.call([&pool, this, &hit, &tmin, src, dst](const size_t* id, size_t){
-        pool.add(m_tris.pool(*id), 1);
-        const int* tri = m_tris.pool(*id);
+      assert(node->leaf);
+      node->tris.call([this, &hit, &tmin, src, dst](const size_t* idx, size_t){
+        size_t triIndex = *idx;
+        assert(triIndex < m_tris.count());
+        const int* tri = m_tris.pool(triIndex);
         const float* v0 = m_verts.pool(tri[0]);
         const float* v1 = m_verts.pool(tri[1]);
         const float* v2 = m_verts.pool(tri[2]);

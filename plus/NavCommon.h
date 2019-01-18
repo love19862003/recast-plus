@@ -77,7 +77,7 @@ namespace NavSpace{
     float navBmax[3];
 
     NavSetting(){
-      cellSize = 0.3f;
+      cellSize = 0.4f;
       cellHeight = 0.2f;
       agentHeight = 2.0f;
       agentRadius = 0.6f;

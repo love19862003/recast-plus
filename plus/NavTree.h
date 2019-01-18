@@ -43,11 +43,21 @@ namespace NavSpace{
       bmax[1] = b.bmax[2];
     }
 
+    void copy(const TreeBouns& b){
+      bmin[0] = b.bmin[0];
+      bmin[1] = b.bmin[1];
+      bmax[0] = b.bmax[0];
+      bmax[1] = b.bmax[1];
+    }
+
     void meger(const TreeBouns& b){
       bmin[0] = std::min<float>(bmin[0], b.bmin[0]);
       bmin[1] = std::min<float>(bmin[1], b.bmin[1]);
       bmax[0] = std::max<float>(bmax[0], b.bmax[0]);
       bmax[1] = std::max<float>(bmax[1], b.bmax[1]);
+    }
+    bool logxy() const{
+      return bmax[0] - bmin[0] > bmax[1] - bmin[1];
     }
   };
   typedef Pool<size_t> TriIdPool;

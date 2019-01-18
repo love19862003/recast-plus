@@ -30,14 +30,6 @@ protected:
 	bool m_keepInterResults;
 	bool m_buildAll;
 	float m_totalBuildTimeMs;
-
-	unsigned char* m_triareas;
-	rcHeightfield* m_solid;
-	rcCompactHeightfield* m_chf;
-	rcContourSet* m_cset;
-	rcPolyMesh* m_pmesh;
-	rcPolyMeshDetail* m_dmesh;
-	rcConfig m_cfg;	
 	
 	enum DrawMode
 	{

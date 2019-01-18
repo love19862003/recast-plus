@@ -237,9 +237,9 @@ namespace NavSpace{
     buildmin[1] = bmin[1];
     buildmin[2] = bmin[2] + tile.second * tcs;
 
-    buildmax[0] = bmin[0] + tile.first * tcs + tcs;
+    buildmax[0] = bmin[0] + (tile.first  + 1)* tcs;
     buildmax[1] = bmax[1];
-    buildmax[2] = bmin[2] + tile.second * tcs + tcs;
+    buildmax[2] = bmin[2] + (tile.second  + 1)* tcs ;
 
     unsigned char* data = buildTileReal(ctx, cfg, solid, chf, pmesh, dmesh, cset, tile, buildmin, buildmax, cache.size);
     if(data){
@@ -263,7 +263,7 @@ namespace NavSpace{
       return nullptr;
     }
 
-    rcConfig cfg = *cf;
+    rcConfig& cfg = *cf;
     memset(&cfg, 0, sizeof(rcConfig));
     cfg.cs = m_setting.cellSize;
     cfg.ch = m_setting.cellHeight;
@@ -310,17 +310,17 @@ namespace NavSpace{
       return nullptr;
     }
 
-    bool error = false;
-    m_objects.forEachValue([&](const ObjectPtr& obj){
-      if(!obj->rasterizeTriangles(ctx, cfg, *solid)){
-        ctx->log(RC_LOG_ERROR, "Building navigation:rasterizeTriangles error");
-        error = true;
-      }
-    });
+     bool error = false;
+     m_objects.forEachValue([&ctx, &cfg, solid, &error](const ObjectPtr& obj){
+       if (!obj->rasterizeTriangles(ctx, cfg, *solid)){
+         ctx->log(RC_LOG_ERROR, "Building navigation:rasterizeTriangles error");
+         error = true;
+       }
+     });
 
-    if (error){
-      return nullptr;
-    }
+//     if (error){
+//       return nullptr;
+//     }
 
     if (filterLowHangingObstacles)
       rcFilterLowHangingWalkableObstacles(ctx, cfg.walkableClimb, *solid);
@@ -341,10 +341,9 @@ namespace NavSpace{
 
     //mark areas
     //or for each ??
-    m_objects.forEachValue([&](const ObjectPtr& obj){
+    m_objects.forEachValue([ctx, chf](const ObjectPtr& obj){
       obj->markVolume(ctx, *chf);
     });
-   // markVolume(ctx, *chf);
 
 
     if (partitionType == SAMPLE_PARTITION_WATERSHED){
@@ -383,6 +382,7 @@ namespace NavSpace{
     }
 
     if (cset->nconts == 0){
+      ctx->log(RC_LOG_ERROR, "buildNavigation: tile: x-%d y-%d cset->nconts = 0.", tile.first, tile.second);
       return nullptr;
     }
 

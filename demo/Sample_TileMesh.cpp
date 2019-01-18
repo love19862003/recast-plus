@@ -47,30 +47,30 @@ using namespace NavSpace;
 #	define snprintf _snprintf
 #endif
 
-
-inline unsigned int nextPow2(unsigned int v)
-{
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v++;
-	return v;
-}
-
-inline unsigned int ilog2(unsigned int v)
-{
-	unsigned int r;
-	unsigned int shift;
-	r = (v > 0xffff) << 4; v >>= r;
-	shift = (v > 0xff) << 3; v >>= shift; r |= shift;
-	shift = (v > 0xf) << 2; v >>= shift; r |= shift;
-	shift = (v > 0x3) << 1; v >>= shift; r |= shift;
-	r |= (v >> 1);
-	return r;
-}
+// 
+// inline unsigned int nextPow2(unsigned int v)
+// {
+// 	v--;
+// 	v |= v >> 1;
+// 	v |= v >> 2;
+// 	v |= v >> 4;
+// 	v |= v >> 8;
+// 	v |= v >> 16;
+// 	v++;
+// 	return v;
+// }
+// 
+// inline unsigned int ilog2(unsigned int v)
+// {
+// 	unsigned int r;
+// 	unsigned int shift;
+// 	r = (v > 0xffff) << 4; v >>= r;
+// 	shift = (v > 0xff) << 3; v >>= shift; r |= shift;
+// 	shift = (v > 0xf) << 2; v >>= shift; r |= shift;
+// 	shift = (v > 0x3) << 1; v >>= shift; r |= shift;
+// 	r |= (v >> 1);
+// 	return r;
+// }
 
 class NavMeshTileTool : public SampleTool
 {
@@ -193,26 +193,9 @@ Sample_TileMesh::Sample_TileMesh() :
 
 Sample_TileMesh::~Sample_TileMesh()
 {
-	cleanup();
-	dtFreeNavMesh(m_navMesh);
-	m_navMesh = 0;
+	
 }
 
-// void Sample_TileMesh::cleanup()
-// {
-// 	delete [] m_triareas;
-// 	m_triareas = 0;
-// 	rcFreeHeightField(m_solid);
-// 	m_solid = 0;
-// 	rcFreeCompactHeightfield(m_chf);
-// 	m_chf = 0;
-// 	rcFreeContourSet(m_cset);
-// 	m_cset = 0;
-// 	rcFreePolyMesh(m_pmesh);
-// 	m_pmesh = 0;
-// 	rcFreePolyMeshDetail(m_dmesh);
-// 	m_dmesh = 0;
-// }
 
 void Sample_TileMesh::handleSettings()
 {
@@ -225,7 +208,7 @@ void Sample_TileMesh::handleSettings()
 		m_buildAll = !m_buildAll;
 	
 	imguiLabel("Tiling");
-	imguiSlider("TileSize", &m_setting.tileSize, 16.0f, 1024.0f, 16.0f);
+	imguiSlider("TileSize", &m_setting.tileSize, 8.0f, 1024.0f, 8.0f);
 	
   if (hasScene()){
 		char text[64];
@@ -241,9 +224,11 @@ void Sample_TileMesh::handleSettings()
 
 		// Max tiles and max polys affect how the tile IDs are caculated.
 		// There are 22 bits available for identifying a tile and a polygon.
-		int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
-		if (tileBits > 14) tileBits = 14;
-		int polyBits = 22 - tileBits;
+// 		int tileBits = std::min<int>(tileBit(tw*th), 14);
+// 		if (tileBits > 14) tileBits = 14;
+// 		int polyBits = 22 - tileBits;
+    int tileBits = tileBit(tw*th);
+    int polyBits = 22 - tileBits;
 		m_maxTiles = 1 << tileBits;
 		m_maxPolysPerTile = 1 << polyBits;
 		snprintf(text, 64, "Max Tiles  %d", m_maxTiles);
@@ -365,6 +350,7 @@ void Sample_TileMesh::handleDebugMode()
 		return;
 	
 	imguiLabel("Draw");
+  if (imguiCheck("TreeBox", m_drawBoxTree)){ m_drawBoxTree = !m_drawBoxTree; }
 	if (imguiCheck("Input Mesh", m_drawMode == DRAWMODE_MESH, valid[DRAWMODE_MESH]))
 		m_drawMode = DRAWMODE_MESH;
 	if (imguiCheck("Navmesh", m_drawMode == DRAWMODE_NAVMESH, valid[DRAWMODE_NAVMESH]))
@@ -675,7 +661,7 @@ void Sample_TileMesh::buildAllTiles()
 	if (!m_navMesh) return;
 	
 	const float* bmin = m_setting.navBmin;
-	const float* bmax = m_setting.navBmin;
+	const float* bmax = m_setting.navBmax;
 	int gw = 0, gh = 0;
 	rcCalcGridSize(bmin, bmax, m_setting.cellSize, &gw, &gh);
 	const int ts = (int)m_setting.tileSize;

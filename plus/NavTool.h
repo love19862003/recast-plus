@@ -79,11 +79,14 @@ namespace NavSpace{
     bool raycastMesh(float* src, float* dst, float& tmin);
 
     bool setScenePtr(ObjectPtr ptr);
+
+    int tileBit(int v) const;
   protected:
     void cleanup();
   protected:
     MeshId m_nextMeshId = INVALID_MESH_ID;
     MObjId m_nextObjId = INVALID_MOBJ_ID;
+    bool m_drawBoxTree = false;
     dtCrowd* m_crowd;
     rcContext* m_ctx;
     rcConfig m_cfg;

@@ -55,11 +55,11 @@ namespace NavSpace{
 
   bool NavTool::buildTile(const TileIndex& tile){
     cleanup();
-    m_solid = rcAllocHeightfield();
-    m_chf = rcAllocCompactHeightfield();
-    m_cset = rcAllocContourSet();
-    m_pmesh = rcAllocPolyMesh();
-    m_dmesh = rcAllocPolyMeshDetail();
+    if (!m_solid)m_solid = rcAllocHeightfield();
+    if (!m_chf)m_chf = rcAllocCompactHeightfield();
+    if (!m_cset)m_cset = rcAllocContourSet();
+    if (!m_pmesh)m_pmesh = rcAllocPolyMesh();
+    if (!m_dmesh)m_dmesh = rcAllocPolyMeshDetail();
 
     TileNavCache cache = buildTileCache(m_ctx, &m_cfg, m_solid, m_chf, m_pmesh, m_dmesh, m_cset, tile);
     if (cache.data == nullptr || cache.size == 0){
@@ -142,6 +142,12 @@ namespace NavSpace{
     const int ty = (int)((pos[2] - bmin[2]) / ts);
     return std::make_pair(tx, ty);
   }
+
+  int NavTool::tileBit(int v) const{
+    int tileBits =  std::min<int>((int)ilog2(nextPow2(v)), 14);
+    if (tileBits > 14) tileBits = 14;
+    return tileBits;
+  }
   bool NavTool::build(){
 
     if (m_objects.size() <= 0){
@@ -160,10 +166,10 @@ namespace NavSpace{
     const float tcs = m_setting.tileSize*m_setting.cellSize;
 
     dtNavMeshParams params;
+    rcVcopy(params.orig, bmin);
     params.tileWidth = tcs;
     params.tileHeight = tcs;
-    int tileBits = std::min<int>((int)ilog2(nextPow2(tw*th)), 14);
-    if (tileBits > 14) tileBits = 14;
+    int tileBits = tileBit(tw*th);
     int polyBits = 22 - tileBits;
     params.maxTiles = 1 << tileBits;
     params.maxPolys = 1 << polyBits;
@@ -424,21 +430,61 @@ namespace NavSpace{
     });
   }
 
+
+
+
+
+  static void drawTreeBox(TreeNode* node, struct duDebugDraw* dd, float hmin, float hmax, int& icol){
+  
+    if (!node){
+      return;
+    }
+
+    if (node->leaf){
+      icol++;
+      //int c = col * 100 % 255;
+      const unsigned int col = duIntToCol(icol * 10, 64);
+      unsigned int fcol[6];
+      duCalcBoxColors(fcol, col, col);
+      duDebugDrawBox(dd, node->bouns.bmin[0] + 0.1f, hmin, node->bouns.bmin[1] + 0.1, node->bouns.bmax[0] - 0.1, hmax, node->bouns.bmax[1] - 0.1, fcol /*duRGBA(255, c, c, 128), 1.0f*/);
+    }
+
+    for (auto& c : node->child){
+      drawTreeBox(c, dd, hmin, hmax, icol);
+    }
+   
+    
+  }
+
   void NavTool::drawMeshObjects(struct duDebugDraw* dd){
     const float texScale = 1.0f / (m_setting.cellSize * 10.0f);
     m_objects.forEachValue([dd,texScale, this](const ObjectPtr& ptr){
       duDebugDrawTriMeshSlope(dd, ptr->m_verts.pool(), ptr->m_verts.count(),
                               ptr->m_tris.pool(),  ptr->m_normals.pool(), ptr->m_tris.count(),
                               m_setting.agentMaxSlope, texScale);
+
+
+      if (m_drawBoxTree){
+        int col = 0;
+        drawTreeBox(ptr->m_tree, dd, ptr->m_bouns.bmin[1], ptr->m_bouns.bmax[1], col);
+      }
+      
+      
     });
   }
+
+
 
   bool NavTool::raycastMesh(float* src, float* dst, float& tmin){
     bool res = false;
     m_objects.forEachValue([&res, &tmin, src, dst](const ObjectPtr& ptr){
       if (ptr){
-        bool r = ptr->raycastMesh(src, dst, tmin);
-        if (r){ res = true;}
+        float t = 1.f;
+        bool r = ptr->raycastMesh(src, dst, t);
+        if (r){ 
+          res = true;
+          if (t < tmin){ tmin = t; }
+        }
       }
     });
     return res;

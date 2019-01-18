@@ -78,9 +78,17 @@ namespace NavSpace{
 
     bool raycastMesh(float* src, float* dst, float& tmin);
 
+    MObjId hitTestMesh(const float* s, const float* e) ;
+
     bool setScenePtr(ObjectPtr ptr);
 
     int tileBit(int v) const;
+
+    const MeshMap& meshMap() const{ return m_meshs; }
+
+    void removeObject(const float* s, const float* e);
+
+    void addObject(const float* pos, float scale, float o, MeshId id);
   protected:
     void cleanup();
   protected:

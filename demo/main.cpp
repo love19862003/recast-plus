@@ -142,8 +142,8 @@ int main(int /*argc*/, char** /*argv*/)
 	bool showLog = false;
 	bool showTools = true;
 	bool showLevels = false;
-	bool showSample = false;
-	bool showTestCases = false;
+  bool showMeshs = false;
+	
 
 	// Window scroll positions.
 	int propScroll = 0;
@@ -153,6 +153,7 @@ int main(int /*argc*/, char** /*argv*/)
 	/*string sampleName = "Choose Sample...";*/
 	
 	vector<string> files;
+  vector<string> meshs;
 	string meshName = "Choose Mesh...";
 	
 	float markerPosition[3] = {0, 0, 0};
@@ -199,10 +200,6 @@ int main(int /*argc*/, char** /*argv*/)
 					}
 					else if (event.key.keysym.sym == SDLK_t)
 					{
-						showLevels = false;
-						showSample = false;
-						showTestCases = true;
-						scanDirectory(testCasesFolder, ".txt", files);
 					}
 					else if (event.key.keysym.sym == SDLK_TAB)
 					{
@@ -502,7 +499,7 @@ int main(int /*argc*/, char** /*argv*/)
 			if (imguiCheck("Show Tools", showTools))
 				showTools = !showTools;
 
-			imguiLabel("Input Mesh");
+			imguiLabel("Input Map");
 			if (imguiButton(meshName.c_str()))
 			{
 				if (showLevels)
@@ -511,23 +508,25 @@ int main(int /*argc*/, char** /*argv*/)
 				}
 				else
 				{
-					showSample = false;
-					showTestCases = false;
 					showLevels = true;
 					scanDirectory(NavSpace::MAP_PATH, NavSpace::MAP_TAG, files);
 					scanDirectoryAppend(NavSpace::DUMP_PATH, NavSpace::DUMP_TAG, files);
           scanDirectoryAppend(NavSpace::OBJECT_PATH, NavSpace::OBJ_TAG, files);
-          scanDirectoryAppend(NavSpace::MESH_PATH, NavSpace::MESH_TAG, files);
+          //scanDirectoryAppend(NavSpace::MESH_PATH, NavSpace::MESH_TAG, files);
 				}
 			}
-// 			if (geom)
-// 			{
-// 				char text[64];
-// 				snprintf(text, 64, "Verts: %.1fk  Tris: %.1fk",
-// 						 geom->getMesh()->getVertCount()/1000.0f,
-// 						 geom->getMesh()->getTriCount()/1000.0f);
-// 				imguiValue(text);
-// 			}
+
+      imguiLabel("Input Mesh");
+      if (imguiButton("Mesh ...")){
+        if (showMeshs){
+          showMeshs = false;
+        }else{
+          showMeshs = true;
+          scanDirectory(NavSpace::MESH_PATH, NavSpace::MESH_TAG, meshs);
+          //scanDirectoryAppend(NavSpace::OBJECT_PATH, NavSpace::OBJ_TAG, meshs);
+        }
+      }
+
 			imguiSeparator();
 
 			if (sample)
@@ -559,55 +558,7 @@ int main(int /*argc*/, char** /*argv*/)
 			imguiEndScrollArea();
 		}
 		
-		// Sample selection dialog.
-// 		if (showSample)
-// 		{
-// 			static int levelScroll = 0;
-// 			if (imguiBeginScrollArea("Choose Sample", width-10-250-10-200, height-10-250, 200, 250, &levelScroll))
-// 				mouseOverMenu = true;
-// 
-// 			Sample* newSample = 0;
-// 			if (newSample)
-// 			{
-// 				delete sample;
-// 				sample = newSample;
-// 				sample->setContext(&ctx);
-// 				if (geom)
-// 				{
-// 					sample->handleMeshChanged(geom);
-// 				}
-// 				showSample = false;
-// 			}
-// 
-// 			if (geom || sample)
-// 			{
-// 				const float* bmin = 0;
-// 				const float* bmax = 0;
-// 				if (geom)
-// 				{
-// 					bmin = geom->getNavMeshBoundsMin();
-// 					bmax = geom->getNavMeshBoundsMax();
-// 				}
-// 				// Reset camera and fog to match the mesh bounds.
-// 				if (bmin && bmax)
-// 				{
-// 					camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-// 								 rcSqr(bmax[1]-bmin[1]) +
-// 								 rcSqr(bmax[2]-bmin[2])) / 2;
-// 					cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-// 					cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-// 					cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-// 					camr *= 3;
-// 				}
-// 				cameraEulers[0] = 45;
-// 				cameraEulers[1] = -45;
-// 				glFogf(GL_FOG_START, camr*0.1f);
-// 				glFogf(GL_FOG_END, camr*1.25f);
-// 			}
-// 			
-// 			imguiEndScrollArea();
-// 		}
-		
+
 		// Level selection dialog.
 		if (showLevels)
 		{
@@ -630,7 +581,7 @@ int main(int /*argc*/, char** /*argv*/)
 			{
 				meshName = *levelToLoad;
 				showLevels = false;
-			  sample->handleMeshChanged(meshName);
+			  sample->handleMapChanged(meshName);
         auto& setting = sample->setting();
 				const float* bmin = setting.navBmin;
 				const float* bmax = setting.navBmax;
@@ -655,6 +606,29 @@ int main(int /*argc*/, char** /*argv*/)
 			imguiEndScrollArea();
 			
 		}
+
+    if (showMeshs){
+      static int MeshScroll = 0;
+      if (imguiBeginScrollArea("Choose Level", width - 10 - 250 - 10 - 200, height - 10 - 450, 200, 450, &MeshScroll))
+        mouseOverMenu = true;
+
+      vector<string>::const_iterator fileIter = meshs.begin();
+      vector<string>::const_iterator filesEnd = meshs.end();
+      vector<string>::const_iterator levelToLoad = filesEnd;
+      for (; fileIter != filesEnd; ++fileIter){
+        if (imguiItem(fileIter->c_str())){
+          levelToLoad = fileIter;
+        }
+      }
+
+      if (levelToLoad != filesEnd){
+        showMeshs = false;
+        sample->handleAddMesh(*levelToLoad);
+      }
+
+      imguiEndScrollArea();
+
+    }
 		
 		
 		// Log
@@ -668,7 +642,7 @@ int main(int /*argc*/, char** /*argv*/)
 		}
 		
 		// Left column tools menu
-		if (!showTestCases && showTools && showMenu) // && geom && sample)
+		if ( showTools && showMenu)
 		{
 			if (imguiBeginScrollArea("Tools", 10, 10, 250, height - 20, &toolsScroll))
 				mouseOverMenu = true;

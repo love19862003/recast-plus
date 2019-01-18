@@ -31,6 +31,7 @@ namespace NavSpace{
   typedef Pool<int, 3> TriPool;
   typedef VertPool NormalPool;
 
+
   struct NavDataBase{
     VertPool m_verts;
     TriPool m_tris;

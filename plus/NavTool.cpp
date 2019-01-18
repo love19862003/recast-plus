@@ -44,6 +44,35 @@ namespace NavSpace{
     return r;
   }
 
+
+  static bool isectSegAABB(const float* sp, const float* sq, const float* amin, const float* amax, float& tmin, float& tmax){
+    static const float EPS = 1e-6f;
+
+    float d[3];
+    d[0] = sq[0] - sp[0];
+    d[1] = sq[1] - sp[1];
+    d[2] = sq[2] - sp[2];
+    tmin = 0.0;
+    tmax = 1.0f;
+
+    for (int i = 0; i < 3; i++){
+      if (fabsf(d[i]) < EPS){
+        if (sp[i] < amin[i] || sp[i] > amax[i])
+          return false;
+      } else{
+        const float ood = 1.0f / d[i];
+        float t1 = (amin[i] - sp[i]) * ood;
+        float t2 = (amax[i] - sp[i]) * ood;
+        if (t1 > t2){ float tmp = t1; t1 = t2; t2 = tmp; }
+        if (t1 > tmin) tmin = t1;
+        if (t2 < tmax) tmax = t2;
+        if (tmin > tmax) return false;
+      }
+    }
+
+    return true;
+  }
+
   NavTool::NavTool(rcContext* ctx):NavScene(), NavManager(), m_ctx(ctx){
     m_crowd = dtAllocCrowd();
   }
@@ -245,12 +274,49 @@ namespace NavSpace{
 
   void  NavTool::addMesh(const std::string& file){
     ++m_nextMeshId;
-    MeshPtr p = Mesh::loadMesh(m_nextMeshId, file);
+    std::string inFile = file;
+    if (hasMagicTag(file, OBJ_TAG)){ inFile = OBJECT_PATH + inFile; }
+    if (hasMagicTag(file, MESH_TAG)){ inFile = MESH_PATH + inFile; }
+
+
+    MeshPtr p = Mesh::loadMesh(m_nextMeshId, inFile);
     if (p){
       m_meshs.addData(p->id(), p);
     }else{
       assert(false);
     }
+  }
+
+  void NavTool::removeObject(const float* s, const float* e){
+    MObjId id = hitTestMesh(s, e);
+    if (id != INVALID_MOBJ_ID){
+      m_objects.eraseData(id);
+    }
+
+  }
+
+  void NavTool::addObject(const float* pos, float scale, float o, MeshId id){
+    auto ptr = m_meshs.getData(id);
+    if (!ptr){
+      return;
+    }
+    ++m_nextObjId;
+    WorldItem wpos;
+    wpos.m_mesh = id;
+    wpos.m_o = o;
+    wpos.m_scale = scale;
+    rcVcopy(wpos.m_pos.data(), pos);
+    ObjectPtr obj = std::make_shared<MeshObject>(m_nextObjId, ptr, wpos);
+    if (!obj){
+      return;
+    }
+    m_objects.addData(obj->id(), obj);
+    
+    // only for test 
+    rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
+    rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
+
+    build();
   }
 
   void NavTool::removeTile(const TileIndex& index){
@@ -473,7 +539,23 @@ namespace NavSpace{
     });
   }
 
-
+  MObjId NavTool::hitTestMesh(const float* s, const float* e) {
+    MObjId res = INVALID_MOBJ_ID;
+    float tmin = FLT_MAX;
+    m_objects.forEachValue([&res, &tmin, s, e, this](const ObjectPtr& ptr){
+      if (ptr->id() == INVALID_MOBJ_ID){
+        return;
+      }
+      float t0, t1;
+      if (isectSegAABB(s, e, ptr->m_bouns.bmin.data(), ptr->m_bouns.bmax.data(), t0, t1)){
+        if (t0 < tmin){
+          tmin = t0;
+          res = ptr->id();
+        }
+      }
+    });
+    return res;
+  }
 
   bool NavTool::raycastMesh(float* src, float* dst, float& tmin){
     bool res = false;

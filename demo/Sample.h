@@ -150,7 +150,8 @@ public:
 	virtual void handleStep();
 	virtual void handleRender();
 	virtual void handleRenderOverlay(double* proj, double* model, int* view);
-	virtual void handleMeshChanged(const std::string& file);
+	virtual void handleMapChanged(const std::string& file);
+  virtual void handleAddMesh(const std::string& file);
 	virtual bool handleBuild();
 	virtual void handleUpdate(const float dt);
 	virtual void collectSettings(struct BuildSettings& settings);

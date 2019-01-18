@@ -311,16 +311,24 @@ namespace NavSpace{
     }
 
      bool error = false;
-     m_objects.forEachValue([&ctx, &cfg, solid, &error](const ObjectPtr& obj){
-       if (!obj->rasterizeTriangles(ctx, cfg, *solid)){
-         ctx->log(RC_LOG_ERROR, "Building navigation:rasterizeTriangles error");
-         error = true;
-       }
-     });
+      m_objects.forEachValue([&ctx, &cfg, solid, &error](const ObjectPtr& obj){
+        if (!obj->rasterizeTriangles(ctx, cfg, *solid)){
+          ctx->log(RC_LOG_ERROR, "Building navigation:rasterizeTriangles error");
+          error = true;
+        }
+      });
+//      auto& map = m_objects.constRefMap();
+//      for (auto it = map.crbegin(); it != map.crend(); ++it)
+//      {
+//        auto obj = it->second;
+//        if (obj){
+//          obj->rasterizeTriangles(ctx, cfg, *solid);
+//        }
+//      }
 
-//     if (error){
-//       return nullptr;
-//     }
+     if (error){
+       return nullptr;
+     }
 
     if (filterLowHangingObstacles)
       rcFilterLowHangingWalkableObstacles(ctx, cfg.walkableClimb, *solid);

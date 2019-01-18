@@ -117,7 +117,11 @@ void Sample::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*vie
 {
 }
 
-void Sample::handleMeshChanged(const std::string& file)
+void Sample::handleAddMesh(const std::string& file){
+  addMesh(file);
+}
+
+void Sample::handleMapChanged(const std::string& file)
 {
   reset();
   load(file);

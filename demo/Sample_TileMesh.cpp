@@ -77,7 +77,10 @@ class NavMeshTileTool : public SampleTool
 	Sample_TileMesh* m_sample;
 	float m_hitPos[3];
 	bool m_hitPosSet;
-	
+  bool m_addMesh = false;
+  float m_scale = 1.f;
+  float m_dir = 0.f;
+  unsigned int m_addId = INVALID_MESH_ID;
 public:
 
 	NavMeshTileTool() :
@@ -113,18 +116,44 @@ public:
 			if (m_sample)
 				m_sample->removeAll();
 		}
+
+
+    if(imguiCheck("add object", m_addMesh)){
+      m_addMesh = !m_addMesh;
+    }
+    imguiSlider("scale", &m_scale, 0.1f, 1.f, 0.1f);
+    imguiSlider("dir", &m_dir, 0, 360, 10);
+
+    if (m_sample){
+      auto& meshs = m_sample->meshMap().constRefMap();
+      for (auto& pair : meshs){
+        if(imguiCheck(("id:"+std::to_string(pair.first) + " path:" +pair.second->name()).data(), m_addId == pair.first)){
+          m_addId = pair.first;
+        }
+      }
+    }
+    
+   ;
 	}
 
-	virtual void handleClick(const float* /*s*/, const float* p, bool shift)
+	virtual void handleClick(const float* s, const float* p, bool shift)
 	{
 		m_hitPosSet = true;
 		rcVcopy(m_hitPos,p);
 		if (m_sample)
 		{
-			if (shift)
-				m_sample->removeTile(m_hitPos);
-			else
-				m_sample->buildTileWithPos(m_hitPos);
+      if (m_addMesh){
+        if (shift)
+          m_sample->removeObject(s, p);
+        else
+          m_sample->addObject(m_hitPos, m_scale, m_dir, m_addId);
+      }else{
+        if (shift)
+          m_sample->removeTile(m_hitPos);
+        else
+          m_sample->buildTileWithPos(m_hitPos);
+      }
+			
 		}
 	}
 
@@ -549,7 +578,7 @@ void Sample_TileMesh::handleRenderOverlay(double* proj, double* model, int* view
 
 void Sample_TileMesh::handleMeshChanged(const std::string& file)
 {
-	Sample::handleMeshChanged(file);
+	Sample::handleMapChanged(file);
 
 // 	const BuildSettings* buildSettings = geom->getBuildSettings();
 // 	if (buildSettings && buildSettings->tileSize > 0)

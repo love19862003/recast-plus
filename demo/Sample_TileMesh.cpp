@@ -265,7 +265,7 @@ void Sample_TileMesh::handleSettings()
 		imguiValue(text);
 		snprintf(text, 64, "Max Polys  %d", m_maxPolysPerTile);
 		imguiValue(text);
-    enableBuild = tw * th < m_maxTiles;
+    enableBuild = tw * th <= m_maxTiles;
 	}
 	else
 	{

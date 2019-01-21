@@ -276,7 +276,7 @@ namespace NavSpace{
     if (!p){
       return;
     }
-    bool res = p->saveMap(m_sceneFile);
+    bool res = p->saveMap(MAP_PATH + m_sceneFile);
     assert(res);
   }
 

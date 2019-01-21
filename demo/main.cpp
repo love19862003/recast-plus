@@ -238,7 +238,7 @@ int main(int /*argc*/, char** /*argv*/)
             if (sample){
               sample->saveMapBin();
             }
-          }else if(event.key.keysym.sym = SDLK_F6){
+          }else if(event.key.keysym.sym == SDLK_F6){
             if (sample){
               sample->moveToNextObject(cameraPos, cameraEulers);
             }

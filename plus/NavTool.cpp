@@ -341,6 +341,7 @@ namespace NavSpace{
       return;
     }
 
+
     if (rec &&(!r1 ||!r2)){
       rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
       rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());

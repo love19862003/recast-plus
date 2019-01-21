@@ -330,6 +330,13 @@ namespace NavSpace{
     // only for test 
     //rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
     //rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
+  
+    float delMin[3], delMax[3];
+    rcVsub(delMin, m_setting.navBmin, obj->m_bouns.bmin.data());
+    rcVsub(delMax, m_setting.navBmax, obj->m_bouns.bmax.data());
+
+    assert(delMin[0] <= 0.f && delMin[1] <= 0.f && delMin[3] <= 0.f);
+    assert(delMax[0] >= 0.f && delMax[1] >= 0.f && delMax[3] >= 0.f);
 
     if (!m_navMesh){
       return;
@@ -337,7 +344,7 @@ namespace NavSpace{
 
     //rebuild tile 
     const float tcs = m_setting.cellSize * m_setting.tileSize;
-    float delMin[3], delMax[3];
+    //float delMin[3], delMax[3];
     dtVsub(delMin, obj->m_bouns.bmin.data(), m_setting.navBmin);
     dtVsub(delMax, obj->m_bouns.bmax.data(), m_setting.navBmin);
     int xMin = std::floor(delMin[0] / tcs);

@@ -24,20 +24,20 @@
      {
      public:
        explicit MyJson(const std::string& file) : m_tree(){
-           try{
+           //try{
                boost::property_tree::json_parser::read_json(file, m_tree);
-           }catch (std::exception& e)
-           {
-               std::cout<< e.what() << std::endl;
-           }
+//            }catch (std::exception& e)
+//            {
+//                std::cout<< e.what() << std::endl;
+//            }
            
        }
        explicit MyJson(std::stringstream& ss) : m_tree() {
-           try{
+           //try{
                boost::property_tree::json_parser::read_json(ss, m_tree);
-           } catch(std::exception& e){
-               std::cout << e.what() << std::endl;
-           }
+//            } catch(std::exception& e){
+//                std::cout << e.what() << std::endl;
+//            }
        }
        explicit MyJson(const boost::property_tree::ptree& tree) : m_tree(tree) {
 

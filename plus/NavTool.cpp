@@ -154,8 +154,9 @@ namespace NavSpace{
 
     //.dump
     if (hasMagicTag(file, DUMP_TAG)){
+      m_dumpFile = file;
       bool res = loadDump(DUMP_PATH + file);
-      m_sceneFile = file;
+      assert(res);
       return res;
     }
 
@@ -244,19 +245,29 @@ namespace NavSpace{
 
   void NavTool::saveMapNavMesh(){
     if (!m_navMesh){ return;}
+   
     bool res = saveNavMesh(NAV_PATH + m_sceneFile);
     assert(res);
   }
 
   void NavTool::loadMapNavMesh(){
-    auto file = setMagicTag(m_sceneFile, NAVMESH_TAG);
+    auto file = m_dumpFile;
+    if (file.empty()){
+      file = m_sceneFile;
+    }
+    file = setMagicTag(file, NAVMESH_TAG);
     loadNavMesh(file);
   }
 
   void NavTool::saveDumpScene(){
-    auto file = setMagicTag(m_sceneFile, DUMP_TAG);
+    auto dumpFile = m_dumpFile;
+    if (dumpFile.empty()){
+      dumpFile = m_sceneFile;
+    }
+    auto file = setMagicTag(dumpFile, DUMP_TAG);
     assert(!file.empty());
     saveDump(file);
+    saveNavMesh(NAV_PATH + file);
   }
 
   void NavTool::saveMapBin(){

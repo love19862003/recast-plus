@@ -100,15 +100,14 @@ namespace NavSpace{
   Mesh::~Mesh(){
 
   }
-  static const std::string MESH_OBJ_TAG = ".obj";
+
   MeshPtr Mesh::loadMesh(const MeshId id, const std::string& file){
     auto pos = file.find_last_of(".");
     if (pos == std::string::npos){
       return nullptr;
     }
-
     auto tag = file.substr(pos);
-    if (tag == MESH_OBJ_TAG){
+    if (tag == OBJ_TAG){
       rcMeshLoaderObj loader;
       if (!loader.load(file)){
         return nullptr;

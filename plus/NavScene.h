@@ -94,6 +94,7 @@ namespace NavSpace{
     NavSetting m_setting;
     mutable BuildOffMeshConPtr m_buildOff;
     std::string m_sceneFile;
+    std::string m_dumpFile;
   };
 
 }

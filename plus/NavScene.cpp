@@ -130,7 +130,7 @@ namespace NavSpace{
       return false;
     }
     try{
-      Utility::MyJson json(DUMP_PATH + file);
+      Utility::MyJson json(file);
       m_setting.cellSize = json.get("setting.cellSize", m_setting.cellSize);
       m_setting.cellHeight = json.get("setting.cellHeight", m_setting.cellHeight);
       m_setting.agentHeight = json.get("setting.agentHeight", m_setting.agentHeight);
@@ -166,6 +166,7 @@ namespace NavSpace{
       });
 
       std::string scene = json.get("scene", std::string());
+      assert(!scene.empty());
       if (!setScene(scene)){ assert(false); return false; }
 
       typedef std::tuple<MObjId, WorldItem> ObjectData;
@@ -208,7 +209,19 @@ namespace NavSpace{
       }
 
       return true;
-    } catch (...){ 
+    } catch (const boost::property_tree::json_parser::json_parser_error& err){
+      std::cout << "message:" << err.message() << " line:" << err.line() << " file:" << err.filename()<< std::endl;
+      return false;
+   
+    } catch (const boost::property_tree::ptree_bad_path& e){
+      return false;
+    } catch (const boost::property_tree::ptree_bad_data& e){
+      return false;
+    } catch (const std::exception& e){
+      std::cout << e.what() << std::endl;
+      return false;
+    }
+    catch(...){
       return false;
     }
   }

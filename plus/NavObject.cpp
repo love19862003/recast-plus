@@ -179,8 +179,10 @@ namespace NavSpace{
   static void subdivide(BoundsItem* items, int nitems, int min, int max, int&depth, TreeNode* node, size_t& maxTriPerChunk){
     if (!node) return;
     int num = max - min;
+#ifdef TREE_DEBUG
     node->num = num;
     node->depth = ++depth;
+#endif
     const int per = 256;
     if (num < per){
       node->leaf = true;
@@ -394,7 +396,9 @@ namespace NavSpace{
     auto list = getOverlappingRect(bouns);
     for (auto& node : list){
       assert(node->leaf);
+#ifdef TREE_DEBUG
       assert(node->num > 0); 
+#endif
       pool.reset();
       node->tris.call([&pool, this](const size_t* idx, size_t){
         size_t triIndex = *idx;

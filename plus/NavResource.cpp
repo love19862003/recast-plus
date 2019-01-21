@@ -188,8 +188,10 @@ namespace NavSpace{
   }
   TreeNode*  NavResource::readNode(std::ifstream& ifile, size_t& maxTri){
     TreeNode* node = new TreeNode;
+#ifdef TREE_DEBUG
     ifile.read((char*)&node->depth, sizeof(int));
     ifile.read((char*)&node->num, sizeof(int));
+#endif
     ifile.read((char*)&node->leaf, sizeof(bool));
     ifile.read((char*)node->bouns.bmin.data(), sizeof(TreeBouns::Bouns::value_type) * node->bouns.bmin.size());
     ifile.read((char*)node->bouns.bmax.data(), sizeof(TreeBouns::Bouns::value_type) * node->bouns.bmax.size());
@@ -212,8 +214,10 @@ namespace NavSpace{
   }
   void NavResource::writeNode(std::ofstream& ofile, TreeNode* node){
     if (!node) return;
+#ifdef TREE_DEBUG
     ofile.write((const char*)&node->depth, sizeof(int));
     ofile.write((const char*)&node->num, sizeof(int));
+#endif
     ofile.write((const char*)&node->leaf, sizeof(bool));
     ofile.write((const char*)node->bouns.bmin.data(), sizeof(TreeBouns::Bouns::value_type) * node->bouns.bmin.size());
     ofile.write((const char*)node->bouns.bmax.data(), sizeof(TreeBouns::Bouns::value_type) * node->bouns.bmax.size());
@@ -234,6 +238,13 @@ namespace NavSpace{
     if (head.version != MESH_MAGIC){ return false; }
     readPool(ifile, head.vers, data.m_verts);
     readPool(ifile, head.tris, data.m_tris);
+#ifdef _DEBUG
+    data.m_tris.call([&data](const int*tri, size_t){
+      assert(data.m_verts.count() > tri[0]);
+      assert(data.m_verts.count() > tri[1]);
+      assert(data.m_verts.count() > tri[2]);
+    });
+#endif // _DEBUG
     data.calcuteBouns();
     return true;
   }

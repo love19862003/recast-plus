@@ -13,8 +13,9 @@
 *************************************************/
 #pragma once
 #include "NavPool.h"
+#define TREE_DEBUG 1
 namespace NavSpace{
-  
+
   constexpr size_t treeChildCount(){ return 2; }
 
   struct MeshBouns{
@@ -62,16 +63,21 @@ namespace NavSpace{
   };
   typedef Pool<size_t> TriIdPool;
 
+
   struct TreeNode{
     TreeNode():tris(0){
+#ifdef TREE_DEBUG
       depth = num = 0;
+#endif
       leaf = false;
       for (auto& c : child){
         c = nullptr;
       }
     }
+#ifdef TREE_DEBUG
     int depth;
     int num;
+#endif
     bool leaf;
     TreeBouns bouns;
     TriIdPool tris;

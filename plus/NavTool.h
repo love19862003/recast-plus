@@ -87,9 +87,9 @@ namespace NavSpace{
 
     const MeshMap& meshMap() const{ return m_meshs; }
 
-    void removeObject(const float* s, const float* e);
+    void removeObject(const float* s, const float* e, bool rec);
 
-    void addObject(const float* pos, float scale, float o, MeshId id);
+    void addObject(const float* pos, float scale, float o, MeshId id, bool rec);
   protected:
     void cleanup();
   protected:

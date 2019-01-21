@@ -117,12 +117,14 @@ namespace NavSpace{
       m_o = 0.f;
       m_scale = 1.f;
       m_mesh = INVALID_MESH_ID;
+      m_id = INVALID_MOBJ_ID;
     }
 
     NavPos m_pos;
     float m_o;
     float m_scale;
     MeshId m_mesh;
+    MObjId m_id;
   };
 
 

@@ -128,19 +128,22 @@ namespace NavSpace{
     return res;
   }
 
-  MeshObject ::MeshObject(MObjId id, MeshPtr mesh, const WorldItem& pos) : NavDataBase(), m_id(id), m_pos(pos){
-    assert(m_pos.m_mesh == mesh->id());
+  MeshObject ::MeshObject(MeshPtr mesh, const WorldItem& pos) : NavDataBase(),  m_item(pos){
+    assert(m_item.m_mesh == mesh->id());
     assert(mesh);
     m_tree = nullptr;
     m_maxTriPerChunk = 0;
+    assert(m_item.m_id != INVALID_MOBJ_ID);
+    assert(m_item.m_mesh != INVALID_MESH_ID);
     initFromMesh(mesh);
   }
 
-  MeshObject::MeshObject(MObjId id) : NavDataBase(), m_id(id){
-    m_pos.m_mesh = INVALID_MESH_ID;
-    m_pos.m_o = 0.f;
-    m_pos.m_pos.fill(0.f);
-    m_pos.m_scale = 1.0f;
+  MeshObject::MeshObject(MObjId id) : NavDataBase(){
+    m_item.m_mesh = INVALID_MESH_ID;
+    m_item.m_o = 0.f;
+    m_item.m_pos.fill(0.f);
+    m_item.m_scale = 1.0f;
+    m_item.m_id = id;
     m_tree = nullptr;
     m_maxTriPerChunk = 0;
   }
@@ -246,8 +249,8 @@ namespace NavSpace{
     m_verts.call([this](float*v, size_t index){
       float in[3];
       dtVcopy(in, v);
-      Matirx::matirx(v, in, m_pos);
-      assert(m_id != INVALID_MOBJ_ID || dtVequal(v, in));
+      Matirx::matirx(v, in, m_item);
+      assert(m_item.m_id != INVALID_MOBJ_ID || dtVequal(v, in));
     });
     initVolumeOffConn();
     //¼ÆËã°üÎ§ºÐ
@@ -303,8 +306,8 @@ namespace NavSpace{
 
     m_volumeOffConn.m_offCons.call([this](OffMeshCon* conn, size_t index){
       float s[3], e[3];
-      Matirx::matirx(s, conn->verts, m_pos);
-      Matirx::matirx(s, conn->verts+ 3, m_pos);
+      Matirx::matirx(s, conn->verts, m_item);
+      Matirx::matirx(s, conn->verts+ 3, m_item);
       dtVcopy(conn->verts, s);
       dtVcopy(conn->verts + 3, e);
     });
@@ -312,11 +315,11 @@ namespace NavSpace{
     m_volumeOffConn.m_volumes.call([this](Volume* vol, size_t index){
       for (int i = 0 ; i < vol->nverts; ++i){
         float s[3];
-        Matirx::matirx(s, vol->verts + i * 3, m_pos);
+        Matirx::matirx(s, vol->verts + i * 3, m_item);
         dtVcopy(vol->verts + i * 3, s);
       }
-      vol->hmin *= m_pos.m_scale;
-      vol->hmax *= m_pos.m_scale;
+      vol->hmin *= m_item.m_scale;
+      vol->hmax *= m_item.m_scale;
     });
 
   }

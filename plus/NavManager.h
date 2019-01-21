@@ -35,10 +35,6 @@ namespace NavSpace{
 
     virtual ~NavManager();
 
-    bool loadNavMesh(const std::string& file);
-
-    bool saveNavMesh(const std::string& file) const;
-
     bool findPath(const NavPos& s, const NavPos& e, std::vector<NavPos>& res) const;
 
     bool randomPoint(const NavPos& c, float r, float(*frand)(), NavPos& out) const;
@@ -53,7 +49,10 @@ namespace NavSpace{
 
     bool isReachAble(const NavPos& p, float diff = 0.001f, NavPos* out = nullptr) const;
 
+    bool saveNavMesh(const std::string& file) const;
   protected:
+    bool loadNavMesh(const std::string& file);
+
     dtPolyRef getPolyRef(const NavPos& pos, NavPos* out = nullptr) const;
 
     bool randomPoint(dtPolyRef& s, const NavPos& c, float r, float(*frand)(), NavPos& out) const;

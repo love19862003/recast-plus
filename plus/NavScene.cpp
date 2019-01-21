@@ -13,7 +13,6 @@
 *************************************************/
 
 #include "NavScene.h"
-#include "DetourCommon.h"
 #include "GuardFunction.h"
 #include "Recast.h"
 #include "RecastAlloc.h"
@@ -57,8 +56,8 @@ namespace NavSpace{
       return false;
     }
     bool res = m_objects.addData(ptr->id(), ptr);
-    dtVcopy(m_setting.navBmin, ptr->m_bouns.bmin.data());
-    dtVcopy(m_setting.navBmax, ptr->m_bouns.bmax.data());
+    rcVcopy(m_setting.navBmin, ptr->m_bouns.bmin.data());
+    rcVcopy(m_setting.navBmax, ptr->m_bouns.bmax.data());
     m_sceneFile = file;
     return res;
   }
@@ -108,13 +107,13 @@ namespace NavSpace{
           if (!ptr || ptr->id() == INVALID_MOBJ_ID) return;
           const WorldItem& item = ptr->item();
           Utility::MyJson tree;
-          tree.set("id", ptr->id());
-          tree.set("world.mesh", item.m_mesh);
-          tree.set("world.x", item.m_pos[0]);
-          tree.set("world.y", item.m_pos[1]);
-          tree.set("world.z", item.m_pos[2]);
-          tree.set("world.o", item.m_o);
-          tree.set("world.scale", item.m_scale);
+          tree.set("id", item.m_id);
+          tree.set("mesh", item.m_mesh);
+          tree.set("x", item.m_pos[0]);
+          tree.set("y", item.m_pos[1]);
+          tree.set("z", item.m_pos[2]);
+          tree.set("o", item.m_o);
+          tree.set("scale", item.m_scale);
           objects.push_back(tree);
         });
         json.addTreeArray("object", objects);
@@ -169,24 +168,22 @@ namespace NavSpace{
       assert(!scene.empty());
       if (!setScene(scene)){ assert(false); return false; }
 
-      typedef std::tuple<MObjId, WorldItem> ObjectData;
-      std::vector<ObjectData> objects;
-      json.getGroup<ObjectData>("object", objects, [](const Utility::MyJson& tree){
-        ObjectData data;
-        std::get<0>(data) = tree.get("id", MObjId(INVALID_MOBJ_ID));
-        WorldItem& item = std::get<1>(data);
-        item.m_mesh = tree.get("world.mesh", MeshId(INVALID_MESH_ID));
-        item.m_pos[0] = tree.get("world.x", 0.f);
-        item.m_pos[1] = tree.get("world.y", 0.f);
-        item.m_pos[2] = tree.get("world.z", 0.f);
-        item.m_o = tree.get("world.o", 0.f);
-        item.m_scale = tree.get("world.scale", 1.f);
-        assert(std::get<0>(data) != INVALID_MOBJ_ID);
-        return data;
+      std::vector<WorldItem> objects;
+      json.getGroup<WorldItem>("object", objects, [](const Utility::MyJson& tree){
+        WorldItem item;
+        item.m_id = tree.get("id", MObjId(INVALID_MOBJ_ID));
+        item.m_mesh = tree.get("mesh", MeshId(INVALID_MESH_ID));
+        item.m_pos[0] = tree.get("x", 0.f);
+        item.m_pos[1] = tree.get("y", 0.f);
+        item.m_pos[2] = tree.get("z", 0.f);
+        item.m_o = tree.get("o", 0.f);
+        item.m_scale = tree.get("scale", 1.f);
+        assert(item.m_id != INVALID_MOBJ_ID);
+        return item;
       });
 
       std::sort(meshs.begin(), meshs.end(), [](const MeshData&l, const MeshData& r){ return std::get<0>(l) < std::get<0>(r); });
-      std::sort(objects.begin(), objects.end(), [](const ObjectData&l, const ObjectData& r){ return std::get<0>(l) < std::get<0>(r); });
+      std::sort(objects.begin(), objects.end(), [](const WorldItem&l, const WorldItem& r){ return l.m_id <r.m_id; });
 
       for (auto& mesh : meshs){
         MeshPtr m = Mesh::loadMesh(std::get<0>(mesh), std::get<1>(mesh));
@@ -195,14 +192,13 @@ namespace NavSpace{
         if (!m_meshs.addData(m->id(), m)){ assert(false); continue; }
       }
 
-      for (auto& obj : objects){
-        MObjId id = std::get<0>(obj);
-        const WorldItem& item = std::get<1>(obj);
+      for (auto& item : objects){
+        MObjId id = item.m_id;
         assert(id != INVALID_MOBJ_ID);
         if (id == INVALID_MOBJ_ID){ assert(false); continue; }
         MeshPtr ptr = m_meshs.getData(item.m_mesh);
         if (!ptr){ assert(false); continue; }
-        ObjectPtr object = std::make_shared<MeshObject>(id, ptr, item);
+        ObjectPtr object = std::make_shared<MeshObject>(ptr, item);
         assert(object);
         if (!object){ assert(false); continue; }
         if (!m_objects.addData(id, object)){ assert(false); continue; }

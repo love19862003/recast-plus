@@ -60,7 +60,7 @@ namespace NavSpace{
 
   class MeshObject : public  NavDataBase , public NonCopyAble{
   public:
-    explicit MeshObject(MObjId id, MeshPtr mesh, const WorldItem& pos);
+    explicit MeshObject(MeshPtr mesh, const WorldItem& pos);
     virtual ~MeshObject();
     bool rasterizeTriangles(rcContext* ctx, const rcConfig& cfg, rcHeightfield& solid);
     bool raycastMesh(float* src, float* dst, float& tmin);
@@ -68,9 +68,8 @@ namespace NavSpace{
     bool saveMap(const std::string& name);
     const VolumeOffCon& volumeOffConns() const{ return m_volumeOffConn; }
 
-
-    inline MObjId id() const{ return m_id; }
-    inline const WorldItem& item() const{ return m_pos; }
+    inline MObjId id() const{ return m_item.m_id; }
+    inline const WorldItem& item() const{ return m_item; }
 
   private:
     explicit MeshObject(MObjId id);
@@ -81,8 +80,7 @@ namespace NavSpace{
     void calcuteNormals();
     void initVolumeOffConn();
   private:
-    MObjId m_id;
-    WorldItem m_pos;
+    WorldItem m_item;
     TreeNode* m_tree;
     size_t m_maxTriPerChunk;
     VolumeOffCon m_volumeOffConn;

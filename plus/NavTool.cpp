@@ -320,8 +320,9 @@ namespace NavSpace{
     wpos.m_mesh = id;
     wpos.m_o = o;
     wpos.m_scale = scale;
+    wpos.m_id = m_nextObjId;
     rcVcopy(wpos.m_pos.data(), pos);
-    ObjectPtr obj = std::make_shared<MeshObject>(m_nextObjId, ptr, wpos);
+    ObjectPtr obj = std::make_shared<MeshObject>(ptr, wpos);
     if (!obj){
       return;
     }

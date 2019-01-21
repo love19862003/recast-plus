@@ -342,14 +342,16 @@ namespace NavSpace{
       return;
     }
 
+    m_ctx->resetLog();
+    m_ctx->resetTimers();
     //rebuild tile 
     const float tcs = m_setting.cellSize * m_setting.tileSize;
     //float delMin[3], delMax[3];
     dtVsub(delMin, obj->m_bouns.bmin.data(), m_setting.navBmin);
     dtVsub(delMax, obj->m_bouns.bmax.data(), m_setting.navBmin);
     int xMin = std::floor(delMin[0] / tcs);
-    int yMin = std::floor(delMin[0] / tcs);
-    int xMax = std::ceil(delMax[2] / tcs);
+    int yMin = std::floor(delMin[2] / tcs);
+    int xMax = std::ceil(delMax[0] / tcs);
     int yMax = std::ceil(delMax[2] / tcs);
 
     for (int x = xMin; x < xMax; x++){

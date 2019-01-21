@@ -32,6 +32,7 @@ namespace NavSpace{
 
     virtual ~NavRuntime();
 
+
     bool start(const std::string& navMesh, const std::string& scene);
 
     void stop();

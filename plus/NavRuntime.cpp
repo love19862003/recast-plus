@@ -30,7 +30,7 @@ namespace NavSpace{
     assert(nullptr != m_nofity);
   }
   NavRuntime::NavRuntime() : NavManager(), NavScene(), m_nofity(nullptr), m_threadRun(false), m_type(STATIC_NAVMESH), m_ctx(nullptr){
-   
+
   }
   NavRuntime::~NavRuntime(){
     if (isDynamicMesh() && m_threadRun){
@@ -102,16 +102,25 @@ namespace NavSpace{
   }
 
   bool NavRuntime::saveDump(const std::string& path) {
+    if (!isDynamicMesh()){
+      return false;
+    }
     std::lock_guard<std::mutex> locker(m_mutex_run);
     return NavScene::saveDump(path);
   }
 
   bool NavRuntime::loadDump(const std::string& path){
+    if (!isDynamicMesh()){
+      return false;
+    }
     std::lock_guard<std::mutex> locker(m_mutex_run);
     return NavScene::loadDump(path);
   }
 
   void NavRuntime::modify(const std::vector<WorldItem>& items, const std::vector<MObjId>& ids){
+    if (!isDynamicMesh()){
+      return ;
+    }
     for (auto& item : items){
       assert(m_meshs.hasData(item.m_mesh));
     }
@@ -159,10 +168,8 @@ namespace NavSpace{
     MObjList removes;
     VItems adds;
     std::set<TileIndex> tiles;
-    
 
     while (m_threadRun){
-
       tiles.clear();
       adds.clear();
       removes.clear();

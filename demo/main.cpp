@@ -534,17 +534,17 @@ int main(int /*argc*/, char** /*argv*/)
 				imguiSeparatorLine();
 				
 				sample->handleSettings();
-
-				if (imguiButton("Build"))
-				{
-					ctx.resetLog();
-					if (!sample->handleBuild())
-					{
-						showLog = true;
-						logScroll = 0;
-					}
-					ctx.dumpLog("Build log %s:", meshName.c_str());
-				}
+// 
+// 				if (imguiButton("Build"))
+// 				{
+// 					ctx.resetLog();
+// 					if (!sample->handleBuild())
+// 					{
+// 						showLog = true;
+// 						logScroll = 0;
+// 					}
+// 					ctx.dumpLog("Build log %s:", meshName.c_str());
+// 				}
 
 				imguiSeparator();
 			}

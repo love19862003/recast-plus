@@ -239,6 +239,7 @@ void Sample_TileMesh::handleSettings()
 	imguiLabel("Tiling");
 	imguiSlider("TileSize", &m_setting.tileSize, 8.0f, 1024.0f, 8.0f);
 	
+  bool enableBuild = false;
   if (hasScene()){
 		char text[64];
 		int gw = 0, gh = 0;
@@ -264,6 +265,7 @@ void Sample_TileMesh::handleSettings()
 		imguiValue(text);
 		snprintf(text, 64, "Max Polys  %d", m_maxPolysPerTile);
 		imguiValue(text);
+    enableBuild = tw * th < m_maxTiles;
 	}
 	else
 	{
@@ -290,6 +292,10 @@ void Sample_TileMesh::handleSettings()
     loadMapNavMesh();
 	}
 
+
+  if (imguiButton("SaveDumpScene")){
+    saveDumpScene();
+  }
 	imguiUnindent();
 	imguiUnindent();
 	
@@ -301,6 +307,12 @@ void Sample_TileMesh::handleSettings()
 	
 	imguiSeparator();
 	
+
+
+  if (imguiButton("Build", enableBuild)){
+    handleBuild();
+  }
+
 }
 
 void Sample_TileMesh::handleTools()
@@ -600,8 +612,6 @@ void Sample_TileMesh::handleMeshChanged(const std::string& file)
 
 bool Sample_TileMesh::handleBuild()
 {
-
-
   if (m_buildAll && !build())
     return false;
 	

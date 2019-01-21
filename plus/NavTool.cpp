@@ -200,7 +200,7 @@ namespace NavSpace{
     params.tileHeight = tcs;
     int tileBits = tileBit(tw*th);
     int polyBits = 22 - tileBits;
-    params.maxTiles = 1 << tileBits;
+    params.maxTiles =  1 << tileBits;
     params.maxPolys = 1 << polyBits;
 
 
@@ -253,6 +253,12 @@ namespace NavSpace{
     loadNavMesh(file);
   }
 
+  void NavTool::saveDumpScene(){
+    auto file = setMagicTag(m_sceneFile, DUMP_TAG);
+    assert(!file.empty());
+    saveDump(file);
+  }
+
   void NavTool::saveMapBin(){
     assert(m_objects.hasData(INVALID_MOBJ_ID));
     auto p = m_objects.getData(INVALID_MOBJ_ID);
@@ -277,8 +283,6 @@ namespace NavSpace{
     std::string inFile = file;
     if (hasMagicTag(file, OBJ_TAG)){ inFile = OBJECT_PATH + inFile; }
     if (hasMagicTag(file, MESH_TAG)){ inFile = MESH_PATH + inFile; }
-
-
     MeshPtr p = Mesh::loadMesh(m_nextMeshId, inFile);
     if (p){
       m_meshs.addData(p->id(), p);
@@ -313,10 +317,29 @@ namespace NavSpace{
     m_objects.addData(obj->id(), obj);
     
     // only for test 
-    rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
-    rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
+    //rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
+    //rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
 
-    build();
+    if (!m_navMesh){
+      return;
+    }
+
+    //rebuild tile 
+    const float tcs = m_setting.cellSize * m_setting.tileSize;
+    float delMin[3], delMax[3];
+    dtVsub(delMin, obj->m_bouns.bmin.data(), m_setting.navBmin);
+    dtVsub(delMax, obj->m_bouns.bmax.data(), m_setting.navBmin);
+    int xMin = std::floor(delMin[0] / tcs);
+    int yMin = std::floor(delMin[0] / tcs);
+    int xMax = std::ceil(delMax[2] / tcs);
+    int yMax = std::ceil(delMax[2] / tcs);
+
+    for (int x = xMin; x < xMax; x++){
+      for(int y = yMin; y < yMax; y++){
+        buildTile(std::make_pair(x, y));
+      }
+    }
+
   }
 
   void NavTool::removeTile(const TileIndex& index){
@@ -365,8 +388,8 @@ namespace NavSpace{
     vol.hmax = maxh;
     vol.nverts = nverts;
     vol.area = area;
-    if (ptr->m_volumeOffConn.m_volumes.add(&vol)){
-     /* offMeshConBuild();*/
+    if (!ptr->m_volumeOffConn.m_volumes.add(&vol)){
+      assert(false);
     }
   }
 
@@ -389,6 +412,8 @@ namespace NavSpace{
 
     if (ptr->m_volumeOffConn.m_offCons.add(&off)){
        offMeshConBuild();
+    }else{
+      assert(false);
     }
   }
   void NavTool::deleteOffMeshConnection(int i){
@@ -398,6 +423,8 @@ namespace NavSpace{
     }
     if (ptr->m_volumeOffConn.m_offCons.remove(i)){
       offMeshConBuild();
+    } else{
+      assert(false);
     }
   }
 
@@ -585,7 +612,7 @@ namespace NavSpace{
     bool res = m_objects.addData(ptr->id(), ptr);
     dtVcopy(m_setting.navBmin, ptr->m_bouns.bmin.data());
     dtVcopy(m_setting.navBmax, ptr->m_bouns.bmax.data());
- 
+    assert(res);
     return res;
   }
 

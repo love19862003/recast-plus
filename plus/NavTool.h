@@ -37,6 +37,7 @@ namespace NavSpace{
     void saveMeshBin(const MeshPtr& ptr);
 
     void loadMapNavMesh();
+    void saveDumpScene();
 
     void addMesh(const std::string& file);
 

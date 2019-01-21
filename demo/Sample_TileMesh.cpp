@@ -278,7 +278,7 @@ void Sample_TileMesh::handleSettings()
 	imguiIndent();
 	imguiIndent();
 	
-	if (imguiButton("SaveMapBin(F1)"))
+	if (imguiButton("SaveMapBin(F5)"))
 	{
     saveMapBin();
 	}
@@ -309,7 +309,7 @@ void Sample_TileMesh::handleSettings()
 	
 
 
-  if (imguiButton("Build(F5)", enableBuild)){
+  if (imguiButton("Build(F1)", enableBuild)){
     handleBuild();
   }
 
@@ -627,6 +627,31 @@ void Sample_TileMesh::collectSettings(BuildSettings& settings)
 	Sample::collectSettings(settings);
 
 	//settings.tileSize = m_tileSize;
+}
+
+void Sample_TileMesh::moveToNextObject(float* cameraPos, float* cameraEulers){
+  ++m_moveTarget;
+  if (!m_objects.hasData(m_moveTarget)){
+    m_moveTarget = INVALID_MOBJ_ID;
+  }
+
+  auto obj = m_objects.getData(m_moveTarget);
+  if (!obj){
+    return;
+  }
+
+  auto& item = obj->item();
+
+  const float* bmin = obj->m_bouns.bmin.data();
+  const float* bmax = obj->m_bouns.bmax.data();
+  float camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+               rcSqr(bmax[1] - bmin[1]) +
+               rcSqr(bmax[2] - bmin[2])) / 2;
+  cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+  cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+  cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+  cameraEulers[0] = 45;
+  cameraEulers[1] = -45;
 }
 
 void Sample_TileMesh::buildTileWithPos(const float* pos)

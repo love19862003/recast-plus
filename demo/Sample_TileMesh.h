@@ -65,6 +65,7 @@ protected:
 	float m_tileBuildTime;
 	float m_tileMemUsage;
 	int m_tileTriCount;
+  NavSpace::MObjId m_moveTarget = NavSpace::INVALID_MOBJ_ID;
 	
 	//void cleanup();
 	
@@ -79,6 +80,7 @@ public:
 	virtual void handleRenderOverlay(double* proj, double* model, int* view);
 	virtual void handleMeshChanged(const std::string& file);
 	virtual bool handleBuild();
+  virtual void moveToNextObject(float* cameraPos, float* cameraEulers);
 	virtual void collectSettings(struct BuildSettings& settings);
 	
 	void getTilePos(const float* pos, int& tx, int& ty);

@@ -155,6 +155,7 @@ public:
 	virtual bool handleBuild();
 	virtual void handleUpdate(const float dt);
 	virtual void collectSettings(struct BuildSettings& settings);
+  virtual void moveToNextObject(float* cameraPos, float* cameraEulers){;}
 
 // 	virtual class InputGeom* getInputGeom() { return m_geom; }
 // 	virtual class dtNavMesh* getNavMesh() { return m_navMesh; }

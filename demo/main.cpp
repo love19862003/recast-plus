@@ -220,7 +220,7 @@ int main(int /*argc*/, char** /*argv*/)
 						
 					}else if (event.key.keysym.sym == SDLK_F1){
             if (sample){
-              sample->saveMapBin();
+              sample->handleBuild();
             }
           } else if (event.key.keysym.sym == SDLK_F2){
             if (sample){
@@ -236,9 +236,14 @@ int main(int /*argc*/, char** /*argv*/)
             }
           } else if (event.key.keysym.sym == SDLK_F5){
             if (sample){
-              sample->handleBuild();
+              sample->saveMapBin();
+            }
+          }else if(event.key.keysym.sym = SDLK_F6){
+            if (sample){
+              sample->moveToNextObject(cameraPos, cameraEulers);
             }
           }
+
 					break;
 				
 				case SDL_MOUSEWHEEL:

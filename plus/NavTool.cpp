@@ -302,7 +302,7 @@ namespace NavSpace{
     }
   }
 
-  void NavTool::removeObject(const float* s, const float* e){
+  void NavTool::removeObject(const float* s, const float* e, bool rec){
     MObjId id = hitTestMesh(s, e);
     if (id != INVALID_MOBJ_ID){
       m_objects.eraseData(id);
@@ -310,7 +310,7 @@ namespace NavSpace{
 
   }
 
-  void NavTool::addObject(const float* pos, float scale, float o, MeshId id){
+  void NavTool::addObject(const float* pos, float scale, float o, MeshId id, bool rec){
     auto ptr = m_meshs.getData(id);
     if (!ptr){
       return;
@@ -326,19 +326,27 @@ namespace NavSpace{
     if (!obj){
       return;
     }
-    m_objects.addData(obj->id(), obj);
-    
-    // only for test 
-    //rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
-    //rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
-  
+   // m_objects.addData(obj->id(), obj);
     float delMin[3], delMax[3];
+
     rcVsub(delMin, m_setting.navBmin, obj->m_bouns.bmin.data());
     rcVsub(delMax, m_setting.navBmax, obj->m_bouns.bmax.data());
+    bool r1 = (delMin[0] <= 0.f && delMin[1] <= 0.f && delMin[3] <= 0.f);
+    bool r2 = (delMax[0] >= 0.f && delMax[1] >= 0.f && delMax[3] >= 0.f);
 
-    assert(delMin[0] <= 0.f && delMin[1] <= 0.f && delMin[3] <= 0.f);
-    assert(delMax[0] >= 0.f && delMax[1] >= 0.f && delMax[3] >= 0.f);
+    if ((r1 && r2) || rec){
+      m_objects.addData(obj->id(), obj);
+    }else{
+      m_ctx->log(RC_LOG_ERROR, "add object with error, bonus is out of scene, you can select calculate bonus");
+      return;
+    }
 
+    if (rec &&(!r1 ||!r2)){
+      rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
+      rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
+      m_ctx->log(RC_LOG_WARNING, "add object change bonus, so you must rebuild all tiles...");
+      return;
+    }
     if (!m_navMesh){
       return;
     }

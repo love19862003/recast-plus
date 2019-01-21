@@ -68,6 +68,10 @@ namespace NavSpace{
   }
 
   void NavRuntime::update(){
+    if (!m_navMesh || !m_navQuery || !m_filter){
+      return;
+    }
+
     if (isDynamicMesh()){
       TileCacheMap navMap;
       MObjList addDone;

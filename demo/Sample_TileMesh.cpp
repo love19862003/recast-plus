@@ -77,6 +77,7 @@ class NavMeshTileTool : public SampleTool
 	Sample_TileMesh* m_sample;
 	float m_hitPos[3];
 	bool m_hitPosSet;
+  bool m_recalculate = false;
   bool m_addMesh = false;
   float m_scale = 1.f;
   float m_dir = 0.f;
@@ -117,23 +118,28 @@ public:
 				m_sample->removeAll();
 		}
 
+    if (imguiCheck("calculate bonus", m_recalculate)){
+      m_recalculate = !m_recalculate;
+    }
 
-    if(imguiCheck("add object", m_addMesh)){
+    if(imguiCheck("action object", m_addMesh)){
       m_addMesh = !m_addMesh;
     }
-    imguiSlider("scale", &m_scale, 0.1f, 1.f, 0.1f);
-    imguiSlider("dir", &m_dir, 0, 360, 10);
 
-    if (m_sample){
-      auto& meshs = m_sample->meshMap().constRefMap();
-      for (auto& pair : meshs){
-        if(imguiCheck(("id:"+std::to_string(pair.first) + " path:" +pair.second->name()).data(), m_addId == pair.first)){
-          m_addId = pair.first;
+    if (m_addMesh){
+      imguiSlider("scale", &m_scale, 0.1f, 1.f, 0.1f);
+      imguiSlider("dir", &m_dir, 0, 360, 10);
+
+      if (m_sample){
+        auto& meshs = m_sample->meshMap().constRefMap();
+        for (auto& pair : meshs){
+          if (imguiCheck(("id:" + std::to_string(pair.first) + " path:" + pair.second->name()).data(), m_addId == pair.first)){
+            m_addId = pair.first;
+          }
         }
       }
     }
-    
-   ;
+
 	}
 
 	virtual void handleClick(const float* s, const float* p, bool shift)
@@ -144,9 +150,9 @@ public:
 		{
       if (m_addMesh){
         if (shift)
-          m_sample->removeObject(s, p);
+          m_sample->removeObject(s, p, m_recalculate);
         else
-          m_sample->addObject(m_hitPos, m_scale, m_dir, m_addId);
+          m_sample->addObject(m_hitPos, m_scale, m_dir, m_addId, m_recalculate);
       }else{
         if (shift)
           m_sample->removeTile(m_hitPos);

@@ -218,7 +218,27 @@ int main(int /*argc*/, char** /*argv*/)
 					else if (event.key.keysym.sym == SDLK_9)
 					{
 						
-					}
+					}else if (event.key.keysym.sym == SDLK_F1){
+            if (sample){
+              sample->saveMapBin();
+            }
+          } else if (event.key.keysym.sym == SDLK_F2){
+            if (sample){
+              sample->saveMapNavMesh();
+            }
+          } else if (event.key.keysym.sym == SDLK_F3){
+            if (sample){
+              sample->loadMapNavMesh();
+            }
+          } else if (event.key.keysym.sym == SDLK_F4){
+            if (sample){
+              sample->saveDumpScene();
+            }
+          } else if (event.key.keysym.sym == SDLK_F5){
+            if (sample){
+              sample->handleBuild();
+            }
+          }
 					break;
 				
 				case SDL_MOUSEWHEEL:

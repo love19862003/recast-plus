@@ -278,22 +278,22 @@ void Sample_TileMesh::handleSettings()
 	imguiIndent();
 	imguiIndent();
 	
-	if (imguiButton("SaveMapBin"))
+	if (imguiButton("SaveMapBin(F1)"))
 	{
     saveMapBin();
 	}
 
-  if (imguiButton("SaveNavMesh")){
+  if (imguiButton("SaveNavMesh(F2)")){
     saveMapNavMesh();
   }
 
-	if (imguiButton("LoadNavMesh"))
+	if (imguiButton("LoadNavMesh(F3)"))
 	{
     loadMapNavMesh();
 	}
 
 
-  if (imguiButton("SaveDumpScene")){
+  if (imguiButton("SaveDumpScene(F4)")){
     saveDumpScene();
   }
 	imguiUnindent();
@@ -309,7 +309,7 @@ void Sample_TileMesh::handleSettings()
 	
 
 
-  if (imguiButton("Build", enableBuild)){
+  if (imguiButton("Build(F5)", enableBuild)){
     handleBuild();
   }
 

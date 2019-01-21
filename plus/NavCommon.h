@@ -94,7 +94,7 @@ namespace NavSpace{
       filterLowHangingObstacles = true;
       filterLedgeSpans = true;
       filterWalkableLowHeightSpans = true;
-      tileSize = 32;
+      tileSize = 124;
       navBmin[0] = navBmin[1] = navBmin[2] = 0.f;
       navBmax[0] = navBmax[1] = navBmax[2] = 0.f;
     }

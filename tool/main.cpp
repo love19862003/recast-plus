@@ -50,6 +50,7 @@ void genMesh(const string& file, const std::string& out){
 
 void genMap(const std::string& file, const std::string& vol, const std::string& out){
   ++sid;
+  std::cout << "begin gen map with file:" << file << std::endl;
   auto mesh = Mesh::loadMesh(sid, file);
   if (!mesh){
     std::cout << "load mesh:" << file << " with error" << std::endl;

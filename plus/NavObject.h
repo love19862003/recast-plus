@@ -77,8 +77,10 @@ namespace NavSpace{
     std::list<TreeNode*> getOverlappingRect(const MeshBouns& bouns);
     std::list<TreeNode*> getOverlappingSegment(const MeshBouns& bouns);
     bool initFromMesh(MeshPtr ptr);
-    void calcuteNormals();
+    void calculateNormals();
     void initVolumeOffConn();
+  private:
+    bool calculateTree();
   private:
     WorldItem m_item;
     TreeNode* m_tree;

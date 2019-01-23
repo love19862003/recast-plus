@@ -22,6 +22,7 @@ IF(BUILD_TESTING AND  TOOL_TESTING)
 		COMMAND tool  "./" 0
 		COMMAND tool  "./" 1
 		COMMAND tool  "./" 2
+		COMMAND tool  "./" 3
 		WORKING_DIRECTORY 	${CMAKE_SOURCE_DIR}/bin/
 		COMMENT  "gen map object and mesh object"
 	)

@@ -34,6 +34,7 @@ namespace NavSpace{
 
     void saveMapNavMesh();
     void saveMapBin();
+    void saveMegerMapBin();
     void saveMeshBin(const MeshPtr& ptr);
 
     void loadMapNavMesh();
@@ -90,6 +91,10 @@ namespace NavSpace{
     void removeObject(const float* s, const float* e, bool rec);
 
     void addObject(const float* pos, float scale, float o, MeshId id, bool rec);
+
+    void addObject(ObjectPtr ptr);
+
+    bool megerObjects(const std::string& file);
   protected:
     void cleanup();
   protected:

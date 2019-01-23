@@ -242,6 +242,7 @@ namespace NavSpace{
     m_verts.resize(ptr->m_verts.count());
     m_verts.add(ptr->m_verts);
     m_tris.resize(ptr->m_tris.count());
+    m_normals.resize(ptr->m_tris.count());
     m_tris.add(ptr->m_tris);
    
 
@@ -250,11 +251,15 @@ namespace NavSpace{
       float in[3];
       dtVcopy(in, v);
       Matirx::matirx(v, in, m_item);
-      assert(m_item.m_id != INVALID_MOBJ_ID || dtVequal(v, in));
+      //assert(m_item.m_id != INVALID_MOBJ_ID || dtVequal(v, in));
     });
     initVolumeOffConn();
     //¼ÆËã°üÎ§ºÐ
     calcuteBouns();
+    return calculateTree();
+  }
+
+  bool MeshObject::calculateTree(){
     size_t ntri = m_tris.count();
     BoundsItem* items = new BoundsItem[ntri];
     if (!items) return false;
@@ -273,9 +278,9 @@ namespace NavSpace{
       //cal tri normal
       float nor[3];
       calNormal(nor, v0, v1, v2);
-      m_normals.add(nor, 1);
+      m_normals.add(nor);
     });
-    
+
 
     int depth = 0;
     m_tree = new TreeNode;
@@ -286,7 +291,7 @@ namespace NavSpace{
     return true;
   }
 
-  void MeshObject::calcuteNormals(){
+  void MeshObject::calculateNormals(){
     m_normals.resize(m_tris.count());
     m_normals.reset();
     m_tris.call([this](const int* tri, size_t index){
@@ -298,7 +303,7 @@ namespace NavSpace{
       const float* v2 = m_verts.pool(tri[2]);
       float nor[3];
       calNormal(nor, v0, v1, v2);
-      m_normals.add(nor, 1);
+      m_normals.add(nor);
     });
   }
 

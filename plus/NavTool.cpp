@@ -280,6 +280,11 @@ namespace NavSpace{
     assert(res);
   }
 
+  void NavTool::saveMegerMapBin(){
+    std::string file = "Meger_" + m_sceneFile ;
+    megerObjects(file);
+  }
+
   void NavTool::saveMeshBin(const MeshPtr& ptr){
     assert(ptr);
     if (!ptr){
@@ -308,6 +313,62 @@ namespace NavSpace{
       m_objects.eraseData(id);
     }
 
+  }
+
+  bool NavTool::megerObjects(const std::string& file){
+    if (m_objects.size() <= 1){
+      return false;
+    }
+
+    ObjectPtr obj (new MeshObject(INVALID_MOBJ_ID));
+    if (!obj){
+      return false;
+    }
+
+    size_t totalVerts = 0;
+    size_t totalTris = 0;
+    size_t totalOffConn = 0;
+    size_t totalVolume = 0;
+    m_objects.forEachValue([&](const ObjectPtr& ptr){
+      totalVerts += ptr->m_verts.count();
+      totalTris += ptr->m_tris.count();
+      totalVolume += ptr->m_volumeOffConn.m_volumes.count();
+      totalOffConn += ptr->m_volumeOffConn.m_offCons.count();
+    });
+
+    obj->m_verts.resize(totalVerts + 1);
+    obj->m_tris.resize(totalTris + 1);
+    obj->m_normals.resize(totalTris + 1);
+    obj->m_volumeOffConn.m_volumes.resize(totalVolume + 1);
+    obj->m_volumeOffConn.m_offCons.resize(totalOffConn + 1);
+
+    size_t index = 0;
+    size_t nverts = 0;
+    m_objects.forEachValue([&index, &nverts, obj](const ObjectPtr& ptr){
+      assert(nverts == obj->m_verts.count());
+      obj->m_verts.add(ptr->m_verts);
+      obj->m_tris.add(ptr->m_tris);
+      obj->m_tris.call([&index, &nverts](int* tri, size_t){
+        tri[0] += nverts;
+        tri[1] += nverts;
+        tri[2] += nverts;
+      }, index);
+      obj->m_volumeOffConn.m_volumes.add(ptr->m_volumeOffConn.m_volumes);
+      obj->m_volumeOffConn.m_offCons.add(ptr->m_volumeOffConn.m_offCons);
+      index += ptr->m_tris.count();
+      nverts += ptr->m_verts.count();
+    });
+
+    if (!obj->calculateTree()){ return false; }
+    return obj->saveMap(MAP_PATH + file);
+  }
+
+  void NavTool::addObject(ObjectPtr ptr){
+    if (!ptr){
+      return;
+    }
+    assert(m_objects.hasData(ptr->id()));
+    m_objects.addData(ptr->id(), ptr);
   }
 
   void NavTool::addObject(const float* pos, float scale, float o, MeshId id, bool rec){

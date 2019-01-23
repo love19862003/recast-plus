@@ -1,3 +1,4 @@
+#include <fstream>
 #include "NavObject.h"
 #include "NavResource.h"
 #include "NavMatrix.h"
@@ -12,9 +13,10 @@
 #	include <cstring>
 #endif
 enum Type{
-  MESH = 0,
-  SCENE = 1,
-  NAV = 2,
+  MEGER = 0,
+  MESH = 1,
+  SCENE = 2,
+  NAV = 3,
 };
 
 
@@ -80,6 +82,53 @@ void genNav(const std::string& file, const std::string& out){
   std::cout << "save nav:" << file <<  "->" << out << std::endl;
 }
 
+void genMeger(const std::string& path, const std::string& name, const std::vector<std::string>& volList, const std::string& out){
+  
+  if (!hasMagicTag(name, MEGER_TAG)){
+    std::cout << "genMeger  is not meger tag" << std::endl;
+    return;
+  }
+
+  std::ifstream ifile(path + MEGER_PATH + name, std::ios::binary | std::ios::in);
+  if (!ifile.is_open()){
+    std::cout << "genMeger not found file " << (path + MEGER_PATH + name)  << std::endl;
+    return;
+  }
+  MeshId nextMeshId = INVALID_MOBJ_ID;
+  static rcContext ctx;
+  NavTool tool(&ctx);
+  const size_t BufMax = 1024;
+  char buf[BufMax];
+  float pos[3];
+  char fileBuf[BufMax];
+  std::string vol;
+  while(!ifile.eof()){
+    memset(buf, 0, sizeof(buf));
+    memset(fileBuf, 0, sizeof(fileBuf));
+    ifile.getline(buf, BufMax);
+    if(sscanf(buf, "%f %f %f %s", pos, pos+1, pos+2, fileBuf)){
+      auto resFile = fileBuf;
+      if (!hasMagicTag(resFile, OBJ_TAG) && !hasMagicTag(resFile, MESH_TAG)){
+        std::cout << "genMeger not found file " << resFile << std::endl;
+        assert(false);
+      }
+      vol = setMagicTag(resFile, VOLUMECONN_TAG);
+      bool has = std::find(volumeList.begin(), volumeList.end(), vol) != volumeList.end();
+      vol = has ? path + VOC_PATH + vol : "";
+      WorldItem item;
+      item.m_id = ++nextMeshId;
+      rcVcopy(item.m_pos.data(),pos);
+      auto ptr = NavResource::genObject(path + MEGER_PATH + resFile, vol, item);
+      if (!ptr){
+        std::cout << "NavResource::genObject error " << path + MEGER_PATH + resFile << std::endl;
+        assert(false);
+      }
+      tool.addObject(ptr);
+    }
+  }
+  ifile.close();
+  tool.megerObjects(out);
+}
 
 }
 
@@ -111,7 +160,7 @@ int main(int argc,  const char** argv){
     out = path + MAP_PATH;
     vocPath = path + VOC_PATH;
     scanDirectory(in, MESH_TAG, fileList);
-    scanDirectoryAppend(vocPath, VOLUMECONN_TAG, volumeList);
+    scanDirectory(vocPath, VOLUMECONN_TAG, volumeList);
    
   }
 
@@ -119,6 +168,14 @@ int main(int argc,  const char** argv){
     in = path + MAP_PATH;
     out = path + NAV_PATH;
     scanDirectory(path + MAP_PATH, MAP_TAG, fileList);
+  }
+
+  if (t == MEGER){
+    in = path + MEGER_PATH;
+    out = path + MAP_PATH;
+    vocPath = path + VOC_PATH;
+    scanDirectory(vocPath, VOLUMECONN_TAG, volumeList);
+    scanDirectory(in, MEGER_TAG, fileList);
   }
 
   if (in.empty() || out.empty()){
@@ -145,6 +202,10 @@ int main(int argc,  const char** argv){
     case NAV: {
         auto outFile = out + setMagicTag(f, NAVMESH_TAG);
         GenSpace::genNav(file, outFile);
+      }break;
+    case MEGER :{
+        auto outFile = out + setMagicTag(f, MAP_TAG);
+        GenSpace::genMeger(path, f, volumeList, outFile);
       }break;
     default:
       break;

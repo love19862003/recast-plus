@@ -120,7 +120,7 @@ namespace NavSpace{
       ifile.read((char*)&header, sizeof(DataMapHeader));
       if (!readVolumeOffConn(ifile, res->m_volumeOffConn)){ return nullptr; }
       if (header.tree){ res->m_tree = readNode(ifile, res->m_maxTriPerChunk); }
-      res->calcuteNormals();
+      res->calculateNormals();
       ifile.close();
       return res;
     } catch (...){
@@ -128,7 +128,7 @@ namespace NavSpace{
     }
   }
 
-  ObjectPtr NavResource::genObject(const std::string& meshFile, const std::string& voloffconn){
+  ObjectPtr NavResource::genObject(const std::string& meshFile, const std::string& voloffconn, const WorldItem& item){
     auto mesh = Mesh::loadMesh(INVALID_MESH_ID, meshFile);
     if (!mesh){
       return nullptr;
@@ -138,7 +138,7 @@ namespace NavSpace{
     if (!res){
       return nullptr;
     }
-
+    res->m_item = item;
     if((!voloffconn.empty() && !readVOF(voloffconn, res->m_volumeOffConn)) || !res->initFromMesh(mesh)){
       return nullptr;
     }

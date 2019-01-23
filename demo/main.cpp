@@ -242,6 +242,10 @@ int main(int /*argc*/, char** /*argv*/)
             if (sample){
               sample->moveToNextObject(cameraPos, cameraEulers);
             }
+          }else if (event.key.keysym.sym == SDLK_F7){
+            if (sample){
+              sample->saveMegerMapBin();
+            }
           }
 
 					break;

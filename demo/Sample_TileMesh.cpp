@@ -298,6 +298,10 @@ void Sample_TileMesh::handleSettings()
     loadMapNavMesh();
 	}
 
+  if (imguiButton("saveMegerMapBin(F7)")){
+    saveMegerMapBin();
+  }
+
 
   if (imguiButton("SaveDumpScene(F4)")){
     saveDumpScene();

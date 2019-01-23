@@ -22,6 +22,7 @@ namespace NavSpace{
   static const std::string MAP_PATH = "./map/";
   static const std::string DUMP_PATH = "./dump/";
   static const std::string VOC_PATH = "./voc/";
+  static const std::string MEGER_PATH = "./meger/";
 
   static const std::string MESH_TAG = ".mesh";
   static const std::string MAP_TAG = ".map";
@@ -29,6 +30,7 @@ namespace NavSpace{
   static const std::string OBJ_TAG = ".obj";
   static const std::string DUMP_TAG = ".dump";
   static const std::string NAVMESH_TAG = ".nav";
+  static const std::string MEGER_TAG = ".meger";
 
 
 
@@ -61,7 +63,7 @@ namespace NavSpace{
     static bool writeObject(const std::string& file, const MeshObject& obj); 
     static bool readVOF(const std::string& file, VolumeOffCon& volumeOff);
     static bool writeVOF(const std::string& file, const VolumeOffCon& data);
-    static ObjectPtr genObject(const std::string& meshFile, const std::string& voloffconn);
+    static ObjectPtr genObject(const std::string& meshFile, const std::string& voloffconn, const WorldItem& item = WorldItem());
 
   protected:
     static TreeNode*  readNode(std::ifstream& ifile, size_t& maxTri);

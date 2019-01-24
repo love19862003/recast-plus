@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <sstream>
 #ifdef WIN32
 #	include <io.h>
 #else
@@ -97,34 +98,41 @@ void genMeger(const std::string& path, const std::string& name, const std::vecto
   MeshId nextMeshId = INVALID_MOBJ_ID;
   static rcContext ctx;
   NavTool tool(&ctx);
-  const size_t BufMax = 1024;
-  char buf[BufMax];
+
+  std::string row;
   float pos[3];
-  char fileBuf[BufMax];
+  std::string resFile;
   std::string vol;
   while(!ifile.eof()){
-    memset(buf, 0, sizeof(buf));
-    memset(fileBuf, 0, sizeof(fileBuf));
-    ifile.getline(buf, BufMax);
-    if(sscanf(buf, "%f %f %f %s", pos, pos+1, pos+2, fileBuf)){
-      auto resFile = fileBuf;
-      if (!hasMagicTag(resFile, OBJ_TAG) && !hasMagicTag(resFile, MESH_TAG)){
-        std::cout << "genMeger not found file " << resFile << std::endl;
-        assert(false);
-      }
-      vol = setMagicTag(resFile, VOLUMECONN_TAG);
-      bool has = std::find(volumeList.begin(), volumeList.end(), vol) != volumeList.end();
-      vol = has ? path + VOC_PATH + vol : "";
-      WorldItem item;
-      item.m_id = ++nextMeshId;
-      rcVcopy(item.m_pos.data(),pos);
-      auto ptr = NavResource::genObject(path + MEGER_PATH + resFile, vol, item);
-      if (!ptr){
-        std::cout << "NavResource::genObject error " << path + MEGER_PATH + resFile << std::endl;
-        assert(false);
-      }
-      tool.addObject(ptr);
+    row.clear();
+    resFile.clear();
+    getline(ifile, row);
+    if (row.empty()){ continue;}
+
+    std::istringstream ss(row);
+    ss >> pos[0] >> pos[1] >> pos[2] >> resFile ;
+    if (resFile.empty()){
+      continue;
     }
+
+    if (!hasMagicTag(resFile, OBJ_TAG) && !hasMagicTag(resFile, MESH_TAG)){
+      std::cout << "genMeger not found file " << resFile << std::endl;
+      assert(false);
+      continue;
+    }
+    vol = setMagicTag(resFile, VOLUMECONN_TAG);
+    bool has = std::find(volumeList.begin(), volumeList.end(), vol) != volumeList.end();
+    vol = has ? path + VOC_PATH + vol : "";
+    WorldItem item;
+    item.m_id = ++nextMeshId;
+    rcVcopy(item.m_pos.data(), pos);
+    auto ptr = NavResource::genObject(path + MEGER_PATH + resFile, vol, item);
+    if (!ptr){
+      std::cout << "NavResource::genObject error " << path + MEGER_PATH + resFile << std::endl;
+      assert(false);
+    }
+    tool.addObject(ptr);
+    
   }
   ifile.close();
   tool.megerObjects(out);

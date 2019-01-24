@@ -15,7 +15,6 @@
 #include <assert.h>
 #include "NavObject.h"
 #include "NavMatrix.h"
-#include "MeshLoaderObj.h"
 #include "DetourCommon.h"
 #include "Recast.h"
 #include "NavResource.h"
@@ -102,24 +101,11 @@ namespace NavSpace{
   }
 
   MeshPtr Mesh::loadMesh(const MeshId id, const std::string& file){
-    auto pos = file.find_last_of(".");
-    if (pos == std::string::npos){
-      return nullptr;
+    auto res = NavResource::readMesh(file, id);
+    if (!res){
+      res = NavResource::loadObj(file, id);
     }
-    auto tag = file.substr(pos);
-    if (tag == OBJ_TAG){
-      rcMeshLoaderObj loader;
-      if (!loader.load(file)){
-        return nullptr;
-      }
-
-      auto res = std::make_shared<Mesh>(file, id);
-      res->m_verts.add(loader.getVerts(), loader.getVertCount());
-      res->m_tris.add(loader.getTris(), loader.getTriCount());
-      res->calcuteBouns();
-      return res;
-    }
-    return NavResource::readMesh(file, id);
+    return res;
   }
 
   bool Mesh::saveMesh(const std::string& path){

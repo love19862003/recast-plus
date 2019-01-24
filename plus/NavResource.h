@@ -57,6 +57,7 @@ namespace NavSpace{
 
   class NavResource{
   public:
+    static MeshPtr loadObj(const std::string& file, const MeshId id);
     static MeshPtr readMesh(const std::string& file, MeshId id);
     static bool writeMesh(const std::string& file, const Mesh& mesh);
     static ObjectPtr readObject(const std::string& file);

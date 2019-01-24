@@ -199,8 +199,9 @@ namespace NavSpace{
         MeshPtr ptr = m_meshs.getData(item.m_mesh);
         if (!ptr){ assert(false); continue; }
         ObjectPtr object = std::make_shared<MeshObject>(ptr, item);
-        assert(object);
         if (!object){ assert(false); continue; }
+        rcVmax(m_setting.navBmax, object->m_bouns.bmax.data());
+        rcVmin(m_setting.navBmin, object->m_bouns.bmin.data());
         if (!m_objects.addData(id, object)){ assert(false); continue; }
       }
 

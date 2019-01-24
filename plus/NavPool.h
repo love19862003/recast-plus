@@ -52,7 +52,10 @@ namespace NavSpace{
 
     bool add(const VALUE* p, size_t count = 1){
       if (m_count + count > m_max){
-        reallocPool(m_count + count);
+        size_t s = 2 * m_max;
+        s = std::max<size_t>(s, 8);
+        s = std::max<size_t>(s, m_count + count);
+        reallocPool(s);
       }
       memcpy(&m_pool[m_count * _Size], p, count * ObjectSize());
       m_count += count;

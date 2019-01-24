@@ -12,6 +12,7 @@
  * \note
 *************************************************/
 #include <fstream>
+#include <sstream>
 #include "NavObject.h"
 #include "NavResource.h"
 
@@ -70,10 +71,69 @@ namespace NavSpace{
     }
   }
 
-  MeshPtr NavResource::readMesh(const std::string& file, MeshId id){
+  static bool isVertRow(const std::string& row){
+    return row.size() > 2 &&  row[0] == 'v' && row[1] != 'n' && row[1] != 't';
+  }
 
+  static bool isTriRow(const std::string& row){
+    return !row.empty() && row[0] == 'f';
+  } 
+
+  MeshPtr NavResource::loadObj(const std::string& file, const MeshId id){
+    if (!hasMagicTag(file, OBJ_TAG)) return nullptr;
+    auto mesh = std::make_shared<Mesh>(file, id);
+    if (!mesh) return nullptr;
+    std::ifstream ifile(file, std::ios::binary | std::ios::in);
+    if (!ifile.is_open()) return nullptr;
+
+    std::string row;
+    float pos[3] = {0.f, 0.f,0.f};
+    std::vector<int> tri;
+    tri.reserve(64);
+
+    auto readTri = [](const std::string& str, size_t max){
+      int r = std::stoi(str);
+      r = r < 0 ? r + max : r - 1;
+      assert(r < max && r >= 0);
+      return r;
+    };
+
+    while(getline(ifile, row)){
+      if (row.empty() ||  row[0] == '#'){ continue;}
+      if (isVertRow(row)){
+        std::istringstream ss(row.substr(1));
+        ss >> pos[0] >> pos[1] >> pos[2];
+        mesh->m_verts.add(pos);
+      }else if (isTriRow(row)){
+        std::istringstream ss(row.substr(1));
+        const size_t nvert = mesh->m_verts.count();
+        std::string str;
+        tri.clear();
+        do 
+        {
+          str.clear();
+          ss >> str;
+          if (str.empty()){ break;}
+          int t = readTri(str, nvert);
+          assert(t < nvert);
+          tri.push_back(t);
+        } while ( !str.empty());
+
+        for (size_t i = 2; i < tri.size(); ++i){
+          int t[3] = {tri[0], tri[i-1], tri[i]};
+          mesh->m_tris.add(t);
+        }
+      }
+    }
+
+    ifile.close();
+    mesh->calcuteBouns();
+    return mesh;
+  }
+
+  MeshPtr NavResource::readMesh(const std::string& file, MeshId id){
     if (!hasMagicTag(file, MESH_TAG)){
-      return false;
+      return nullptr;
     }
  
     auto res = std::make_shared<Mesh>(file, id);

@@ -348,7 +348,7 @@ namespace NavSpace{
       assert(nverts == obj->m_verts.count());
       obj->m_verts.add(ptr->m_verts);
       obj->m_tris.add(ptr->m_tris);
-      obj->m_tris.call([&index, &nverts](int* tri, size_t){
+      obj->m_tris.call([&nverts](int* tri, size_t){
         tri[0] += nverts;
         tri[1] += nverts;
         tri[2] += nverts;
@@ -357,6 +357,12 @@ namespace NavSpace{
       obj->m_volumeOffConn.m_offCons.add(ptr->m_volumeOffConn.m_offCons);
       index += ptr->m_tris.count();
       nverts += ptr->m_verts.count();
+    });
+
+    
+    unsigned int connid = 1;
+    obj->m_volumeOffConn.m_offCons.call([&connid](OffMeshCon* con, size_t){
+      con->id = ++connid;
     });
 
     if (!obj->calculateTree()){ return false; }

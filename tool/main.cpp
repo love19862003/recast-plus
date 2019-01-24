@@ -38,6 +38,7 @@ vector<string> volumeList;
 namespace GenSpace{
 void genMesh(const string& file, const std::string& out){
   ++sid;
+  std::cout << "begin load mesh:" << file << "->" << out << std::endl;
   auto mesh = Mesh::loadMesh(sid, file);
   if (!mesh){
     std::cout << "load mesh:" << file << " with error" << std::endl;
@@ -70,6 +71,7 @@ void genMap(const std::string& file, const std::string& vol, const std::string& 
 }
 
 void genNav(const std::string& file, const std::string& out){
+  std::cout << "begin gen navmesh :" << file << "->" << out << std::endl;
   auto ptr = NavResource::readObject(file);
   if (!ptr){
       std::cout << "load Map:" << file << " with error" << std::endl;
@@ -85,6 +87,7 @@ void genNav(const std::string& file, const std::string& out){
 
 void genMeger(const std::string& path, const std::string& name, const std::vector<std::string>& volList, const std::string& out){
   
+  std::cout << "begin meger object files:" << path + name << "->" << out << std::endl;
   if (!hasMagicTag(name, MEGER_TAG)){
     std::cout << "genMeger  is not meger tag" << std::endl;
     return;
@@ -136,6 +139,7 @@ void genMeger(const std::string& path, const std::string& name, const std::vecto
   }
   ifile.close();
   tool.megerObjects(out);
+  std::cout << "done meger object files:" << path + name << "->" << out << std::endl;
 }
 
 }

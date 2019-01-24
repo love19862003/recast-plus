@@ -23,11 +23,12 @@
 
 namespace NavSpace{
 
-  template<typename T>
-  T* navAlloc(){
+  template<typename T, typename ... ARGS >
+  T* navAlloc(ARGS ... args ){
     T* t = (T*)dtAlloc(sizeof(T), DT_ALLOC_PERM);
     if (!t) return nullptr;
-    return new(t) T;
+    return new(t) T(std::forward<ARGS>(args)...);
+
   }
 
   template<typename T>

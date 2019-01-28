@@ -137,7 +137,7 @@ namespace NavSpace{
     if (!isDynamicMesh()){
       return true;
     }
-    assert(m_threadRun);
+    assert(!m_threadRun);
     if (!mesh){ return false; }
     return m_meshs.addData(mesh->id(), mesh);
   }

@@ -23,6 +23,7 @@ namespace NavSpace{
   static const std::string DUMP_PATH = "./dump/";
   static const std::string VOC_PATH = "./voc/";
   static const std::string MEGER_PATH = "./meger/";
+  static const std::string MAP_OBJ_PATH = "./map_obj/";
 
   static const std::string MESH_TAG = ".mesh";
   static const std::string MAP_TAG = ".map";

@@ -540,8 +540,8 @@ int main(int /*argc*/, char** /*argv*/)
 					showLevels = true;
 					scanDirectory(NavSpace::MAP_PATH, NavSpace::MAP_TAG, files);
 					scanDirectoryAppend(NavSpace::DUMP_PATH, NavSpace::DUMP_TAG, files);
-          scanDirectoryAppend(NavSpace::OBJECT_PATH, NavSpace::OBJ_TAG, files);
-          //scanDirectoryAppend(NavSpace::MESH_PATH, NavSpace::MESH_TAG, files);
+          scanDirectoryAppend(NavSpace::MAP_OBJ_PATH, NavSpace::OBJ_TAG, files);
+          scanDirectoryAppend(NavSpace::MAP_OBJ_PATH, NavSpace::MESH_TAG, files);
 				}
 			}
 

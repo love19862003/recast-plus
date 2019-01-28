@@ -142,7 +142,10 @@ void genMeger(const std::string& path, const std::string& name, const std::vecto
   std::cout << "done meger object files:" << path + name << "->" << out << std::endl;
 }
 
+
+
 }
+
 
 
 int main(int argc,  const char** argv){
@@ -161,14 +164,15 @@ int main(int argc,  const char** argv){
 
 
   if (t == MESH){
+    std::cout << "gen object mesh " << std::endl;
     in = path + OBJECT_PATH;
     out = path + MESH_PATH;
     scanDirectory(in, OBJ_TAG, fileList);
-   
   }
 
   if (t == SCENE){
-    in = path + MESH_PATH;
+    std::cout << "gen map mesh " << std::endl;
+    in = path + MAP_OBJ_PATH;
     out = path + MAP_PATH;
     vocPath = path + VOC_PATH;
     scanDirectory(in, MESH_TAG, fileList);
@@ -177,12 +181,14 @@ int main(int argc,  const char** argv){
   }
 
   if (t == NAV){
+    std::cout << "gen navmesh " << std::endl;
     in = path + MAP_PATH;
     out = path + NAV_PATH;
     scanDirectory(path + MAP_PATH, MAP_TAG, fileList);
   }
 
   if (t == MEGER){
+    std::cout << "meger objects mesh " << std::endl;
     in = path + MEGER_PATH;
     out = path + MAP_PATH;
     vocPath = path + VOC_PATH;

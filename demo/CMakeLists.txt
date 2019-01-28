@@ -1,3 +1,5 @@
+FILE(COPY ${CMAKE_SOURCE_DIR}/recastnavigation/RecastDemo/cmake/ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+FILE(COPY ${CMAKE_SOURCE_DIR}/recastnavigation/RecastDemo/Contrib/ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/Contrib)
 FILE(GLOB SOURCES ./*.cpp ./Contrib/fastlz/fastlz.c ./*.h ./Contrib/fastlz/fastlz.h)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)

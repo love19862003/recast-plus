@@ -79,8 +79,10 @@ namespace NavSpace{
     if (file.empty() || !hasMagicTag(file, NAVMESH_TAG)) return false;
     
     try{
-      std::ifstream ifile(NAV_PATH + file, std::ios::in | std::ios::binary);
-      {
+      std::ifstream ifile( file, std::ios::in | std::ios::binary);
+      if(!ifile.is_open()){
+        return false;
+      }else{
         Utility::GuardFun exit([&ifile](){ ifile.close(); });
         NavMeshSetHeader header;
         ifile.read((char*)&header, sizeof(NavMeshSetHeader));

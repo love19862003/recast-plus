@@ -54,6 +54,8 @@ namespace NavSpace{
     if (isDynamicMesh()){
       if (!setScene(scene)){ return false; }
       assert(m_meshs.size() > 0);
+      assert(!m_threadRun);
+      if (m_threadRun){ return false; }
       m_threadRun = true;
       m_thread = std::move(std::thread(&NavRuntime::threadMain, this));
     }

@@ -256,7 +256,7 @@ namespace NavSpace{
       file = m_sceneFile;
     }
     file = setMagicTag(file, NAVMESH_TAG);
-    loadNavMesh(file);
+    loadNavMesh(NAV_PATH + file);
   }
 
   void NavTool::saveDumpScene(){

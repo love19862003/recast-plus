@@ -47,6 +47,9 @@ namespace NavSpace{
 
     try{
       std::ifstream ifile(file, std::ios::in | std::ios::binary);
+      if (!ifile.is_open()){
+        return false;
+      }
       if (!readVolumeOffConn(ifile, volumeOff)){
         return nullptr;
       }
@@ -140,6 +143,9 @@ namespace NavSpace{
     if (!res) return nullptr;
     try{
       std::ifstream ifile(file, std::ios::in | std::ios::binary);
+      if (!ifile.is_open()){
+        return nullptr;
+      }
       if (!readBase(ifile, *res)){
         return nullptr;
       }
@@ -166,12 +172,15 @@ namespace NavSpace{
   ObjectPtr NavResource::readObject(const std::string& file){
 
     if (!hasMagicTag(file, MAP_TAG)){
-      return false;
+      return nullptr;
     }
 
     ObjectPtr res(new MeshObject(INVALID_MOBJ_ID));
     try{
       std::ifstream ifile(file, std::ios::in | std::ios::binary);
+      if (!ifile.is_open()){
+        return nullptr;
+      }
       if (!readBase(ifile, *res)){
         return nullptr;
       }

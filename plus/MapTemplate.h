@@ -120,6 +120,7 @@ namespace Utility {
         return optional_value;
       }
 
+
       const value_type& getData(const std::function<bool(const pair_type&)>& fun) const{
         for (auto& pair : m_map){
           if (fun(pair)){
@@ -129,6 +130,24 @@ namespace Utility {
         return optional_value;
       }
 
+
+      value_type& getIndex(size_t index){
+        if (index >= 0 && index < m_map.size()){
+          auto it = map.begin();
+          std::advance(it, index);
+          return it->second;
+        }
+        return optional_value;
+      }
+
+      const value_type& getIndex(size_t index) const{
+        if (index >= 0 && index < m_map.size()){
+          auto it = map.begin();
+          std::advance(it, index);
+          return it->second;
+        }
+        return optional_value;
+      }
 
       void eraseData(const key_type& key) {
         m_map.erase(key);
@@ -194,6 +213,7 @@ namespace Utility {
 
       void setOptional(const key_type& k) {
         optional_key = k;
+        optional_value = nullptr;
       }
 
       value_type& optional() { return optional_value; }
@@ -266,6 +286,24 @@ namespace Utility {
           if (fun(pair)){
             return pair.second;
           }
+        }
+        return optional_value;
+      }
+
+      value_type& getIndex(size_t index){
+        if (index >= 0 && index < m_map.size()){
+          auto it = m_map.begin();
+          std::advance(it, index);
+          return it->second;
+        }
+        return optional_value;
+      }
+
+      const value_type& getIndex(size_t index) const{
+        if (index >= 0 && index < m_map.size()){
+          auto it = m_map.begin();
+          std::advance(it, index);
+          return it->second;
         }
         return optional_value;
       }

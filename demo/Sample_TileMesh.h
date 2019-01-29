@@ -65,7 +65,7 @@ protected:
 	float m_tileBuildTime;
 	float m_tileMemUsage;
 	int m_tileTriCount;
-  NavSpace::MObjId m_moveTarget = NavSpace::INVALID_MOBJ_ID;
+  size_t m_moveTarget = 0;
 	
 	//void cleanup();
 	

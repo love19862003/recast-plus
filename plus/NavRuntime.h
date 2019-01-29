@@ -19,6 +19,7 @@
 
 namespace NavSpace{
 
+  class RunTimeCtx;
   class NavRuntime : public NavManager, protected NavScene, public NonCopyAble
   {
   public:
@@ -67,6 +68,6 @@ namespace NavSpace{
     NotifyCall m_nofity;
     bool m_threadRun;
     const NavType m_type;
-    rcContext* m_ctx;
+    RunTimeCtx* m_ctx;
   };
 }

@@ -62,7 +62,7 @@ namespace NavSpace{
     return res;
   }
   bool NavScene::saveDump(const std::string& name){
-    auto file = DUMP_PATH + setMagicTag(name, DUMP_TAG);
+    auto file = setMagicTag(name, DUMP_TAG);
     try{
         Utility::MyJson json;
         json.set("setting.cellSize", m_setting.cellSize);
@@ -89,21 +89,20 @@ namespace NavSpace{
         json.set("setting.navBmax.x", m_setting.navBmax[0]);
         json.set("setting.navBmax.y", m_setting.navBmax[1]);
         json.set("setting.navBmax.z", m_setting.navBmax[2]);
-
-        std::vector<Utility::MyJson> meshs;
-        m_meshs.forEachValue([&meshs](const MeshPtr& ptr){
-          if (!ptr) return;
-          Utility::MyJson tree;
-          tree.set("mesh", ptr->name());
-          tree.set("id", ptr->id());
-          meshs.push_back(tree);
-        });
-
         json.set("scene", sceneFile());
 
+        std::vector<Utility::MyJson> meshs;
+        std::vector<MeshId> ids;
+//         m_meshs.forEachValue([&meshs](const MeshPtr& ptr){
+//           if (!ptr) return;
+//           Utility::MyJson tree;
+//           tree.set("mesh", ptr->name());
+//           tree.set("id", ptr->id());
+//           meshs.push_back(tree);
+//         });
         json.addTreeArray("mesh", meshs);
         std::vector<Utility::MyJson> objects;
-        m_objects.forEachValue([&objects](const ObjectPtr& ptr){
+        m_objects.forEachValue([&objects, &ids](const ObjectPtr& ptr){
           if (!ptr || ptr->id() == INVALID_MOBJ_ID) return;
           const WorldItem& item = ptr->item();
           Utility::MyJson tree;
@@ -115,7 +114,27 @@ namespace NavSpace{
           tree.set("o", item.m_o);
           tree.set("scale", item.m_scale);
           objects.push_back(tree);
+          if (ids.end() == std::find(ids.begin(), ids.end(), item.m_mesh)){
+            ids.push_back(item.m_mesh);
+          }
         });
+        for (auto id : ids){
+          auto ptr = m_meshs.getData(id);
+          if (!ptr){
+            assert(false);
+            continue;
+          }
+          Utility::MyJson tree;
+          auto str = ptr->name();
+          auto pos = str.find(MESH_PATH);
+          if (pos != str.npos){
+            str = str.substr(pos + MESH_PATH.length());
+          }
+          tree.set("mesh", str);
+          tree.set("id", ptr->id());
+          meshs.push_back(tree);
+        }
+        json.addTreeArray("mesh", meshs);
         json.addTreeArray("object", objects);
         bool res = json.saveToFile(file);
         assert(res);
@@ -186,7 +205,7 @@ namespace NavSpace{
       std::sort(objects.begin(), objects.end(), [](const WorldItem&l, const WorldItem& r){ return l.m_id <r.m_id; });
 
       for (auto& mesh : meshs){
-        MeshPtr m = Mesh::loadMesh(std::get<0>(mesh), std::get<1>(mesh));
+        MeshPtr m = Mesh::loadMesh(std::get<0>(mesh), MESH_PATH + std::get<1>(mesh));
         assert(m);
         if (!m){ assert(false); continue; }
         if (!m_meshs.addData(m->id(), m)){ assert(false); continue; }
@@ -299,8 +318,7 @@ namespace NavSpace{
     cfg.bmax[0] += cfg.borderSize*cfg.cs;
     cfg.bmax[2] += cfg.borderSize*cfg.cs;
 
-    ctx->resetTimers();
-    ctx->startTimer(RC_TIMER_TOTAL);
+    ctx->startTimer(RC_TIMER_TEMP);
     ctx->log(RC_LOG_PROGRESS, "Building navigation:");
     ctx->log(RC_LOG_PROGRESS, " - %d x %d cells", cfg.width, cfg.height);
 
@@ -481,16 +499,11 @@ namespace NavSpace{
         return nullptr;
       }
     }
-    //m_tileMemUsage = navDataSize / 1024.0f;
 
-    ctx->stopTimer(RC_TIMER_TOTAL);
 
-    // Show performance stats.
-    //duLogBuildTimes(*m_ctx, m_ctx->getAccumulatedTime(RC_TIMER_TOTAL));
+    ctx->stopTimer(RC_TIMER_TEMP);
     ctx->log(RC_LOG_PROGRESS, ">> Polymesh: %d vertices  %d polygons", pmesh->nverts, pmesh->npolys);
-
-   // m_tileBuildTime = m_ctx->getAccumulatedTime(RC_TIMER_TOTAL) / 1000.0f;
-
+    ctx->log(RC_LOG_PROGRESS, ">> Tile: %d %d cost %d ", tile.first, tile.second, ctx->getAccumulatedTime(RC_TIMER_TEMP));
     dataSize = navDataSize;
     return navData;
   }

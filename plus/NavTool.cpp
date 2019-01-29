@@ -130,8 +130,8 @@ namespace NavSpace{
       else{ fclose(fp); } 
 
       std::string inFile = file;
-      if (hasMagicTag(file, OBJ_TAG)){ inFile = OBJECT_PATH + inFile; }
-      if (hasMagicTag(file, MESH_TAG)){ inFile = MESH_PATH + inFile; }
+      if (hasMagicTag(file, OBJ_TAG)){ inFile = MAP_OBJ_PATH + inFile; }
+      if (hasMagicTag(file, MESH_TAG)){ inFile = MAP_OBJ_PATH + inFile; }
 
       auto ptr = NavResource::genObject(inFile, volFile);
       if (!ptr){
@@ -266,7 +266,7 @@ namespace NavSpace{
     }
     auto file = setMagicTag(dumpFile, DUMP_TAG);
     assert(!file.empty());
-    saveDump(file);
+    saveDump(DUMP_PATH + file);
     saveNavMesh(NAV_PATH + file);
   }
 

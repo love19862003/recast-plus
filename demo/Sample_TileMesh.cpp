@@ -641,12 +641,9 @@ void Sample_TileMesh::collectSettings(BuildSettings& settings)
 
 void Sample_TileMesh::moveToNextObject(float* cameraPos, float* cameraEulers){
   ++m_moveTarget;
-  if (!m_objects.hasData(m_moveTarget)){
-    m_moveTarget = INVALID_MOBJ_ID;
-  }
-
-  auto obj = m_objects.getData(m_moveTarget);
+  auto obj = m_objects.getIndex(m_moveTarget);
   if (!obj){
+    m_moveTarget = 0;
     return;
   }
 

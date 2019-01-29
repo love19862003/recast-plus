@@ -26,7 +26,7 @@ namespace NavSpace{
     vec(3) = 1.f;
 
     const static float pi = 3.14159265358f;
-    float o = w.m_o / 180.f;
+    float o = w.m_o / 180.f * pi;
     m(0, 0) = std::cos(o);
     m(0, 2) = -std::sin(o);
     m(1, 1) = 1.f;

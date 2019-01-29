@@ -18,18 +18,90 @@
 #include <Recast.h>
 namespace NavSpace{
 
+  typedef std::chrono::system_clock time_clock;
+  typedef std::chrono::microseconds ms_type;
+  typedef std::chrono::hours hour_type;
+
+  template<typename T>
+  inline std::string concat(T t){
+    return  std::to_string(t);
+  }
+
+  template<>
+  inline std::string concat<char*>(char* t){
+    return std::string(t);
+  }
+
+  template<>
+  inline std::string concat<const char*>(const char* t){
+    return std::string(t);
+  }
+
+  template<>
+  inline std::string concat< std::string>(std::string t){
+    return t;
+  }
+
+  template<typename T, typename ... ARGS>
+  inline std::string concat(T t, ARGS ...  args){
+    return concat(t) + concat(args ...);
+  }
 
   class RunTimeCtx : public rcContext
   {
   public:
+    template<typename T, typename ... ARGS>
+    void slog(const rcLogCategory c, T t, ARGS... args){
+      auto str = concat(t, args ...);
+      sdoLog(c, str);
+    }
+
   protected:
+    virtual void doLog(const rcLogCategory c , const char*  str, const int size ) final{
+      sdoLog(c, std::string(str, size));
+    }
+    void sdoLog(const rcLogCategory c, const std::string& str){
+      std::cout << str << std::endl;
+    }
+
+   
+
+    virtual void doResetTimers() final{
+      for (int i = RC_TIMER_TOTAL; i < RC_MAX_TIMERS; ++i){
+        _stimers[i] = _etimers[i] = time_clock::now();
+      }
+    }
+
+    virtual void doStartTimer(const rcTimerLabel lab) final{
+      if(lab < RC_MAX_TIMERS){
+        _stimers[lab] = time_clock::now();
+      }
+    }
+
+    virtual void doStopTimer(const rcTimerLabel lab) final{
+      if (lab < RC_MAX_TIMERS){
+        _etimers[lab] = time_clock::now();
+      }
+    }
+
+    virtual int doGetAccumulatedTime(const rcTimerLabel lab) const final{
+      if (lab < RC_MAX_TIMERS){
+        auto delay =  std::chrono::duration_cast<ms_type>(_etimers[lab] - _stimers[lab]).count();
+        return delay > 0 ? delay : -1;
+      }else{
+        return -1;
+      }
+    }
   private:
+    time_clock::time_point _stimers[RC_MAX_TIMERS];
+    time_clock::time_point _etimers[RC_MAX_TIMERS];
   };
+
 
   NavRuntime::NavRuntime(const NotifyCall& notify) :  NavManager(), NavScene(),m_nofity(notify), m_threadRun(false), m_type(DYNAMIC_NAMESH), m_ctx(new RunTimeCtx){
     assert(nullptr != m_nofity);
   }
-  NavRuntime::NavRuntime() : NavManager(), NavScene(), m_nofity(nullptr), m_threadRun(false), m_type(STATIC_NAVMESH), m_ctx(nullptr){
+  NavRuntime::NavRuntime() : NavManager(), NavScene(), m_nofity(nullptr), m_threadRun(false), m_type(STATIC_NAVMESH), m_ctx(new RunTimeCtx){
 
   }
   NavRuntime::~NavRuntime(){
@@ -170,6 +242,9 @@ namespace NavSpace{
     return true;
   }
 
+  
+
+
   void NavRuntime::threadMain(){
     MObjList removes;
     VItems adds;
@@ -188,10 +263,13 @@ namespace NavSpace{
         m_waitRemove.clear();
       }
 
+      m_ctx->startTimer(RC_TIMER_TOTAL);
       MObjList ids;
       for (auto& item : adds){
         ids.push_back(item.m_id);
       }
+
+      
       auto it = std::remove_if(adds.begin(), adds.end(), [&removes](const WorldItem& item){
         return std::find(removes.begin(), removes.end(), item.m_id) != removes.end();
       });
@@ -206,15 +284,24 @@ namespace NavSpace{
           assert(false);
           continue;
         }
+        m_ctx->startTimer(RC_TIMER_TEMP);
         ObjectPtr ptr = std::make_shared<MeshObject>(mesh, item);
+        m_ctx->stopTimer(RC_TIMER_TEMP);
         if (!ptr){
           assert(false);
           continue;
         }
 
+        m_ctx->slog(RC_LOG_PROGRESS,
+                    "add object:", mesh->name(),
+                    " verts:", mesh->m_verts.count(),
+                    " tris:", mesh->m_tris.count(),
+                    " cost:", m_ctx->getAccumulatedTime(RC_TIMER_TEMP));
+
         if(m_objects.addData(ptr->id(), ptr)){
           rebuilds.push_back(ptr);
         }
+        
       }
 
       for (auto id : removes){
@@ -247,11 +334,12 @@ namespace NavSpace{
       for (auto& tile : tiles){
         buildTile(tile);
       }
-
-      if (true){
+      m_ctx->stopTimer(RC_TIMER_TOTAL);
+      if (ids.size() || removes.size()){
         std::lock_guard<std::mutex> locker(m_mutex_update);
         m_addDone.insert(m_addDone.end(), ids.begin(), ids.end());
         m_removeDone.insert(m_removeDone.end(), removes.begin(), removes.end());
+        m_ctx->slog(RC_LOG_PROGRESS, "build cost:", m_ctx->getAccumulatedTime(RC_TIMER_TOTAL), " add:", ids.size(), " remove:", removes.size());
       }
       std::this_thread::sleep_for(std::chrono::microseconds(1));
     }

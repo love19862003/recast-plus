@@ -366,7 +366,7 @@ namespace NavSpace{
     });
 
     if (!obj->calculateTree()){ return false; }
-    return obj->saveMap(MAP_PATH + file);
+    return obj->saveMap(file);
   }
 
   void NavTool::addObject(ObjectPtr ptr){

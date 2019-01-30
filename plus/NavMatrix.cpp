@@ -13,10 +13,13 @@
 *************************************************/
 
 #include "NavMatrix.h"
+#ifdef MATIRX_TYPE_BOOST
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/operation.hpp>
+#endif
 namespace NavSpace{
-  void Matirx::matirx(float* out, const float in[3], const WorldItem& w){
+#ifdef MATIRX_TYPE_BOOST
+  static void smatirx(float* out, const float in[3], const WorldItem& w){
     namespace ublas = boost::numeric::ublas;
     ublas::vector<float> vec(4);
     ublas::matrix<float> m(4, 4, 0.f);
@@ -41,5 +44,23 @@ namespace NavSpace{
     out[0] = w.m_pos[0] + res(0) * w.m_scale;
     out[1] = w.m_pos[1] + res(1) * w.m_scale;
     out[2] = w.m_pos[2] + res(2) * w.m_scale;
+  }
+#else
+  static void smatirx(float* out, const float in[3], const WorldItem& w){
+    const static float pi = 3.14159265358f;
+    float o = w.m_o / 180.f * pi;
+    float c = std::cos(o);
+    float s = std::sin(o);
+    out[0] = in[0] * c - in[2] * s;
+    out[1] = in[1];
+    out[2] = in[2] * c + in[0] * s;
+
+    out[0] = w.m_pos[0] + out[0] * w.m_scale;
+    out[1] = w.m_pos[1] + out[1] * w.m_scale;
+    out[2] = w.m_pos[2] + out[2] * w.m_scale;
+  }
+#endif
+  void Matirx::matirx(float* out, const float in[3], const WorldItem& w){
+    smatirx(out, in, w);
   }
 }

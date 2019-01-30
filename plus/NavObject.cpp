@@ -13,6 +13,7 @@
 *************************************************/
 
 #include <assert.h>
+#include <algorithm>
 #include "NavObject.h"
 #include "NavMatrix.h"
 #include "DetourCommon.h"

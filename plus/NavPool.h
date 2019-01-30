@@ -14,7 +14,10 @@
 #pragma once
 #include <functional>
 #include <assert.h>
+#include <type_traits>
+#include <memory>
 #include "NavCommon.h"
+#include <string.h>
 namespace NavSpace{
 
   template<typename T, size_t _Size = 1>

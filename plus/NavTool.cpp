@@ -11,6 +11,7 @@
  *
  * \note
 *************************************************/
+#include <float.h>
 #include "NavTool.h"
 #include "DetourCrowd.h"
 #include "DetourCommon.h"
@@ -315,6 +316,72 @@ namespace NavSpace{
 
   }
 
+  void NavTool::setSelObj(const float* s, const float* e, bool reset){
+    if (reset){
+      m_selId = INVALID_MOBJ_ID;
+      return;
+    }
+    MObjId id = hitTestMesh(s, e);
+    if (id != INVALID_MOBJ_ID){
+      m_selId = id;
+      auto p = m_objects.getData(id);
+      if (p){
+        rebuildObject(p);
+      }
+    } 
+  }
+
+  void NavTool::rotateObject(float o, float scale){
+    if (INVALID_MOBJ_ID == m_selId){
+      return;
+    }
+
+    auto p = m_objects.getData(m_selId);
+    if (!p){
+      return;
+    }
+
+    //rebuildObject(p);
+
+    WorldItem item = p->item();
+    item.m_o = o;
+    item.m_scale = scale;
+
+    auto mesh = m_meshs.getData(item.m_mesh);
+    if (mesh){
+      auto np = std::make_shared<MeshObject>(mesh, item);
+      if (np){
+        m_objects.replaceData(np->id(), np);
+        rebuildObject(p);
+        rebuildObject(np);
+      }
+      
+    }
+
+  }
+
+  void NavTool::rebuildObject(ObjectPtr ptr){
+    if (!ptr || !m_navMesh){
+      return;
+    }
+
+    const float tcs = m_setting.cellSize * m_setting.tileSize;
+     float delMin[3], delMax[3];
+    dtVsub(delMin, ptr->m_bouns.bmin.data(), m_setting.navBmin);
+    dtVsub(delMax, ptr->m_bouns.bmax.data(), m_setting.navBmin);
+    int xMin = std::floor(delMin[0] / tcs);
+    int yMin = std::floor(delMin[2] / tcs);
+    int xMax = std::ceil(delMax[0] / tcs);
+    int yMax = std::ceil(delMax[2] / tcs);
+
+    for (int x = xMin; x < xMax; x++){
+      for (int y = yMin; y < yMax; y++){
+        m_updateTiles.insert(std::make_pair(x, y));
+      }
+    }
+
+  }
+
   bool NavTool::megerObjects(const std::string& file){
     if (m_objects.size() <= 1){
       return false;
@@ -374,7 +441,11 @@ namespace NavSpace{
       return;
     }
     assert(m_objects.hasData(ptr->id()));
-    m_objects.addData(ptr->id(), ptr);
+    if(m_objects.addData(ptr->id(), ptr)){
+      rebuildObject(ptr);
+    }
+
+   
   }
 
   void NavTool::addObject(const float* pos, float scale, float o, MeshId id, bool rec){
@@ -393,7 +464,7 @@ namespace NavSpace{
     if (!obj){
       return;
     }
-   // m_objects.addData(obj->id(), obj);
+
     float delMin[3], delMax[3];
 
     rcVsub(delMin, m_setting.navBmin, obj->m_bouns.bmin.data());
@@ -403,39 +474,41 @@ namespace NavSpace{
 
     if ((r1 && r2) || rec){
       m_objects.addData(obj->id(), obj);
-    }else{
+    } else{
       m_ctx->log(RC_LOG_ERROR, "add object with error, bonus is out of scene, you can select calculate bonus");
       return;
     }
 
 
-    if (rec &&(!r1 ||!r2)){
+    if (rec && (!r1 || !r2)){
       rcVmax(m_setting.navBmax, obj->m_bouns.bmax.data());
       rcVmin(m_setting.navBmin, obj->m_bouns.bmin.data());
       m_ctx->log(RC_LOG_WARNING, "add object change bonus, so you must rebuild all tiles...");
       return;
     }
-    if (!m_navMesh){
-      return;
-    }
 
-    m_ctx->resetLog();
-    m_ctx->resetTimers();
-    //rebuild tile 
-    const float tcs = m_setting.cellSize * m_setting.tileSize;
-    //float delMin[3], delMax[3];
-    dtVsub(delMin, obj->m_bouns.bmin.data(), m_setting.navBmin);
-    dtVsub(delMax, obj->m_bouns.bmax.data(), m_setting.navBmin);
-    int xMin = std::floor(delMin[0] / tcs);
-    int yMin = std::floor(delMin[2] / tcs);
-    int xMax = std::ceil(delMax[0] / tcs);
-    int yMax = std::ceil(delMax[2] / tcs);
-
-    for (int x = xMin; x < xMax; x++){
-      for(int y = yMin; y < yMax; y++){
-        buildTile(std::make_pair(x, y));
-      }
-    }
+    rebuildObject(obj);
+//     if (!m_navMesh){
+//       return;
+//     }
+// 
+//     m_ctx->resetLog();
+//     m_ctx->resetTimers();
+//     //rebuild tile 
+//     const float tcs = m_setting.cellSize * m_setting.tileSize;
+//     //float delMin[3], delMax[3];
+//     dtVsub(delMin, obj->m_bouns.bmin.data(), m_setting.navBmin);
+//     dtVsub(delMax, obj->m_bouns.bmax.data(), m_setting.navBmin);
+//     int xMin = std::floor(delMin[0] / tcs);
+//     int yMin = std::floor(delMin[2] / tcs);
+//     int xMax = std::ceil(delMax[0] / tcs);
+//     int yMax = std::ceil(delMax[2] / tcs);
+// 
+//     for (int x = xMin; x < xMax; x++){
+//       for(int y = yMin; y < yMax; y++){
+//         buildTile(std::make_pair(x, y));
+//       }
+//     }
 
   }
 
@@ -659,6 +732,13 @@ namespace NavSpace{
         drawTreeBox(ptr->m_tree, dd, ptr->m_bouns.bmin[1], ptr->m_bouns.bmax[1], col);
       }
       
+
+      if (INVALID_MOBJ_ID != m_selId && m_selId == ptr->id()){
+        const float* bmin = ptr->m_bouns.bmin.data();
+        const float* bmax = ptr->m_bouns.bmax.data();
+        duDebugDrawBoxWire(dd, bmin[0], bmin[1], bmin[2], bmax[0], bmax[1], bmax[2], duRGBA(255, 255, 255, 128), 1.f);
+      }
+
       
     });
   }

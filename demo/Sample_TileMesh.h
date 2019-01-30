@@ -23,6 +23,9 @@
 #include "DetourNavMesh.h"
 #include "Recast.h"
 
+#include <chrono>
+
+typedef std::chrono::steady_clock time_clock;
 
 class Sample_TileMesh : public Sample
 {
@@ -66,6 +69,7 @@ protected:
 	float m_tileMemUsage;
 	int m_tileTriCount;
   size_t m_moveTarget = 0;
+  time_clock::time_point m_last;
 	
 	//void cleanup();
 	

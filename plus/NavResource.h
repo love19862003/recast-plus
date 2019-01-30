@@ -75,23 +75,7 @@ namespace NavSpace{
     static bool readVolumeOffConn(std::ifstream& ifile, VolumeOffCon& volumeOff);
     static bool writeVolumeOffConn(std::ofstream& ofile, const VolumeOffCon& data);
 
-    template<typename T>
-    static void readPool(std::ifstream& ifile, size_t count, T& pool){
-      if (count <= 0){  return; }
-      pool.resize(count + 1);
-      for (size_t i = 0; i < count; ++i){
-        T::ARRAY arr;
-        ifile.read((char*)arr.data(), T::ObjectSize());
-        pool.add(arr.data(), 1);
-      }
-    }
-
-    template<typename T>
-    static void writePool(std::ofstream& ofile, const T& pool){
-      if (pool.count() > 0){
-        ofile.write((const char*)pool.pool(), pool.count() * T::ObjectSize());
-      }
-    }
+  
 
   protected:
   private:

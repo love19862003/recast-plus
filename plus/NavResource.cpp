@@ -39,6 +39,24 @@ namespace NavSpace{
   };
 #pragma pack(pop)
 
+  template<typename T>
+  static void readPool(std::ifstream& ifile, size_t count, T& pool){
+    if (count <= 0){ return; }
+    pool.resize(count + 1);
+    for (size_t i = 0; i < count; ++i){
+      T::ARRAY arr;
+      ifile.read((char*)arr.data(), T::ObjectSize());
+      pool.add(arr.data(), 1);
+    }
+  }
+
+  template<typename T>
+  static void writePool(std::ofstream& ofile, const T& pool){
+    if (pool.count() > 0){
+      ofile.write((const char*)pool.pool(), pool.count() * T::ObjectSize());
+    }
+  }
+
   bool NavResource::readVOF(const std::string& file, VolumeOffCon& volumeOff){
   
     if (!hasMagicTag(file, VOLUMECONN_TAG)){
@@ -309,9 +327,9 @@ namespace NavSpace{
     readPool(ifile, head.tris, data.m_tris);
 #ifdef _DEBUG
     data.m_tris.call([&data](const int*tri, size_t){
-      assert(data.m_verts.count() > tri[0]);
-      assert(data.m_verts.count() > tri[1]);
-      assert(data.m_verts.count() > tri[2]);
+      assert(data.m_verts.count() >  static_cast<size_t>(tri[0]));
+      assert(data.m_verts.count() >  static_cast<size_t>(tri[1]));
+      assert(data.m_verts.count() >  static_cast<size_t>(tri[2]));
     });
 #endif // _DEBUG
     data.calcuteBouns();

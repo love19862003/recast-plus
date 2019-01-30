@@ -12,6 +12,7 @@
  * \note
 *************************************************/
 #pragma once
+#include <set>
 #include "NavManager.h"
 #include "NavScene.h"
 #include "Recast.h"
@@ -95,6 +96,12 @@ namespace NavSpace{
     void addObject(ObjectPtr ptr);
 
     bool megerObjects(const std::string& file);
+
+    void setSelObj(const float* s, const float* e, bool reset);
+
+    void rotateObject(float o, float scale);
+
+    void rebuildObject(ObjectPtr ptr);
   protected:
     void cleanup();
   protected:
@@ -109,6 +116,8 @@ namespace NavSpace{
     rcPolyMesh* m_pmesh = nullptr;
     rcPolyMeshDetail* m_dmesh = nullptr;
     rcContourSet* m_cset = nullptr;
+    MObjId m_selId = INVALID_MOBJ_ID;
+    std::set<TileIndex> m_updateTiles;
   
   };
 

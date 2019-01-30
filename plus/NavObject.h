@@ -13,6 +13,7 @@
 *************************************************/
 #pragma once
 #include <array>
+#include <list>
 #include <memory>
 #include "NavTree.h"
 #include "NavVolumeConn.h"

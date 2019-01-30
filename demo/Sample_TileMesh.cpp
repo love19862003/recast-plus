@@ -79,6 +79,7 @@ class NavMeshTileTool : public SampleTool
 	bool m_hitPosSet;
   bool m_recalculate = false;
   bool m_addMesh = false;
+  bool m_rotate = false;
   float m_scale = 1.f;
   float m_dir = 0.f;
   unsigned int m_addId = INVALID_MESH_ID;
@@ -125,10 +126,21 @@ public:
     if(imguiCheck("action object", m_addMesh)){
       m_addMesh = !m_addMesh;
     }
+    if (imguiCheck("rotate object", m_rotate)){
+      m_rotate = !m_rotate;
+    }
 
-    if (m_addMesh){
-      imguiSlider("scale", &m_scale, 0.1f, 1.f, 0.1f);
-      imguiSlider("dir", &m_dir, 0, 360, 10);
+    if (m_addMesh || m_rotate){
+      if(imguiSlider("scale", &m_scale, 0.1f, 1.f, 0.1f)){
+        if (m_rotate && m_sample){
+          m_sample->rotateObject(m_dir, m_scale);
+        }
+      }
+      if(imguiSlider("dir", &m_dir, 0, 360, 10)){
+        if (m_rotate && m_sample){
+          m_sample->rotateObject(m_dir, m_scale);
+        }
+      }
 
       if (m_sample){
         auto& meshs = m_sample->meshMap().constRefMap();
@@ -148,7 +160,9 @@ public:
 		rcVcopy(m_hitPos,p);
 		if (m_sample)
 		{
-      if (m_addMesh){
+      if (m_rotate){
+        m_sample->setSelObj(s, p, shift);
+      }else if (m_addMesh){
         if (shift)
           m_sample->removeObject(s, p, m_recalculate);
         else
@@ -218,7 +232,8 @@ Sample_TileMesh::Sample_TileMesh() :
 	m_tileCol(duRGBA(0,0,0,32)),
 	m_tileBuildTime(0),
 	m_tileMemUsage(0),
-	m_tileTriCount(0)
+	m_tileTriCount(0) ,
+  m_last(time_clock::now())
 {
 	memset(m_lastBuiltTileBmin, 0, sizeof(m_lastBuiltTileBmin));
 	memset(m_lastBuiltTileBmax, 0, sizeof(m_lastBuiltTileBmax));
@@ -578,6 +593,15 @@ void Sample_TileMesh::handleRender()
 	renderToolStates();
  
 	glDepthMask(GL_TRUE);
+
+  time_clock::time_point now = time_clock::now();
+  if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last).count() > 1500){
+    m_last = now;
+    for (auto& tile : m_updateTiles){
+      buildTile(tile);
+    }
+    m_updateTiles.clear();
+  }
 }
 
 void Sample_TileMesh::handleRenderOverlay(double* proj, double* model, int* view)

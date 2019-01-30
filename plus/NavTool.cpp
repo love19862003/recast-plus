@@ -311,7 +311,8 @@ namespace NavSpace{
   void NavTool::removeObject(const float* s, const float* e, bool rec){
     MObjId id = hitTestMesh(s, e);
     if (id != INVALID_MOBJ_ID){
-      m_objects.eraseData(id);
+     auto p = m_objects.eraseData(id);
+     rebuildObject(p);
     }
 
   }
@@ -324,10 +325,6 @@ namespace NavSpace{
     MObjId id = hitTestMesh(s, e);
     if (id != INVALID_MOBJ_ID){
       m_selId = id;
-      auto p = m_objects.getData(id);
-      if (p){
-        rebuildObject(p);
-      }
     } 
   }
 

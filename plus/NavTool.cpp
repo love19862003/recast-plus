@@ -281,9 +281,9 @@ namespace NavSpace{
     assert(res);
   }
 
-  void NavTool::saveMegerMapBin(){
+  void NavTool::saveMergeMapBin(){
     std::string file = "Meger_" + m_sceneFile ;
-    megerObjects(file);
+    mergeObjects(file);
   }
 
   void NavTool::saveMeshBin(const MeshPtr& ptr){
@@ -379,7 +379,7 @@ namespace NavSpace{
 
   }
 
-  bool NavTool::megerObjects(const std::string& file){
+  bool NavTool::mergeObjects(const std::string& file){
     if (m_objects.size() <= 1){
       return false;
     }

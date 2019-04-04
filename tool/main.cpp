@@ -88,14 +88,14 @@ void genNav(const std::string& file, const std::string& out){
 void genMeger(const std::string& path, const std::string& name, const std::vector<std::string>& volList, const std::string& out){
   
   std::cout << "begin meger object files:" << path + name << "->" << out << std::endl;
-  if (!hasMagicTag(name, MEGER_TAG)){
+  if (!hasMagicTag(name, MERGE_TAG)){
     std::cout << "genMeger  is not meger tag" << std::endl;
     return;
   }
 
-  std::ifstream ifile(path + MEGER_PATH + name, std::ios::binary | std::ios::in);
+  std::ifstream ifile(path + MERGE_PATH + name, std::ios::binary | std::ios::in);
   if (!ifile.is_open()){
-    std::cout << "genMeger not found file " << (path + MEGER_PATH + name)  << std::endl;
+    std::cout << "genMeger not found file " << (path + MERGE_PATH + name)  << std::endl;
     return;
   }
   MeshId nextMeshId = INVALID_MOBJ_ID;
@@ -129,16 +129,16 @@ void genMeger(const std::string& path, const std::string& name, const std::vecto
     WorldItem item;
     item.m_id = ++nextMeshId;
     rcVcopy(item.m_pos.data(), pos);
-    auto ptr = NavResource::genObject(path + MEGER_PATH + resFile, vol, item);
+    auto ptr = NavResource::genObject(path + MERGE_PATH + resFile, vol, item);
     if (!ptr){
-      std::cout << "NavResource::genObject error " << path + MEGER_PATH + resFile << std::endl;
+      std::cout << "NavResource::genObject error " << path + MERGE_PATH + resFile << std::endl;
       assert(false);
     }
     tool.addObject(ptr);
     
   }
   ifile.close();
-  tool.megerObjects(out);
+  tool.mergeObjects(out);
   std::cout << "done meger object files:" << path + name << "->" << out << std::endl;
 }
 
@@ -189,11 +189,11 @@ int main(int argc,  const char** argv){
 
   if (t == MEGER){
     std::cout << "meger objects mesh " << std::endl;
-    in = path + MEGER_PATH;
+    in = path + MERGE_PATH;
     out = path + MAP_PATH;
     vocPath = path + VOC_PATH;
     scanDirectory(vocPath, VOLUMECONN_TAG, volumeList);
-    scanDirectory(in, MEGER_TAG, fileList);
+    scanDirectory(in, MERGE_TAG, fileList);
   }
 
   if (in.empty() || out.empty()){

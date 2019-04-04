@@ -313,8 +313,8 @@ void Sample_TileMesh::handleSettings()
     loadMapNavMesh();
 	}
 
-  if (imguiButton("saveMegerMapBin(F7)")){
-    saveMegerMapBin();
+  if (imguiButton("saveMergeMapBin(F7)")){
+    saveMergeMapBin();
   }
 
 

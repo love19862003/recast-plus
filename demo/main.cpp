@@ -244,7 +244,7 @@ int main(int /*argc*/, char** /*argv*/)
             }
           }else if (event.key.keysym.sym == SDLK_F7){
             if (sample){
-              sample->saveMegerMapBin();
+              sample->saveMergeMapBin();
             }
           }
 

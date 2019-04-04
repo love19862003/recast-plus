@@ -35,7 +35,7 @@ namespace NavSpace{
 
     void saveMapNavMesh();
     void saveMapBin();
-    void saveMegerMapBin();
+    void saveMergeMapBin();
     void saveMeshBin(const MeshPtr& ptr);
 
     void loadMapNavMesh();
@@ -95,7 +95,7 @@ namespace NavSpace{
 
     void addObject(ObjectPtr ptr);
 
-    bool megerObjects(const std::string& file);
+    bool mergeObjects(const std::string& file);
 
     void setSelObj(const float* s, const float* e, bool reset);
 

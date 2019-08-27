@@ -1,3 +1,5 @@
+[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+
 1.每个模型管理自己的定点和三角形序列
 2.包围盒树管理器管理全部的包围盒，每个模型的包围盒树需要带上模型ID
 3.生成navmesh的时候，在给三角形标记的时候回去重新计算像素化数据保证可行走区域标记

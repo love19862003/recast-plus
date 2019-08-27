@@ -466,8 +466,8 @@ namespace NavSpace{
 
     rcVsub(delMin, m_setting.navBmin, obj->m_bouns.bmin.data());
     rcVsub(delMax, m_setting.navBmax, obj->m_bouns.bmax.data());
-    bool r1 = (delMin[0] <= 0.f && delMin[1] <= 0.f && delMin[3] <= 0.f);
-    bool r2 = (delMax[0] >= 0.f && delMax[1] >= 0.f && delMax[3] >= 0.f);
+    bool r1 = (delMin[0] <= 0.f && delMin[1] <= 0.f && delMin[2] <= 0.f);
+    bool r2 = (delMax[0] >= 0.f && delMax[1] >= 0.f && delMax[2] >= 0.f);
 
     if ((r1 && r2) || rec){
       m_objects.addData(obj->id(), obj);
